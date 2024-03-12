@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Production build output
+build/
+
+# Editor temporary or backup files
+# Choose the ones relevant to your editor
+*.swp
+*.swo
+*.swo2
+*.bak
+*.lock
+
+# OS specific temporary or backup files
+Thumbs.db
+DS_Store
+
+# IDE or test related files
+# Adjust based on your setup
+coverage/
+jest/
+
+# dotenv files (environment variables)
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Logs
+*.log
+
+# API keys or other sensitive information
+.env
