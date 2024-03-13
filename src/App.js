@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { auth } from './firebase-config';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -13,6 +13,7 @@ function App() {
   const [error, setError] = useState('');
   const [user, setUser] = useState(null); // State to keep track of the current user
   const navigate = useNavigate();
+  console.log(user);
 
     // Effect to monitor the auth state
     useEffect(() => {
@@ -50,16 +51,6 @@ function App() {
     } catch (error) {
       setError(error.message);
       console.error(error.message);
-    }
-  };
-
-  // Logout function
-  const handleLogout = async () => {
-    try {
-      await signOut(auth); // Sign out from Firebase
-      navigate('/'); // Redirect to default page
-    } catch (error) {
-      console.error('Logout failed', error);
     }
   };
 
