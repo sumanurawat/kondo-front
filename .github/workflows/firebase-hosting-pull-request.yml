@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v1
         with:
-          node-version: '16' # Choose the node version that matches your development environment
+          node-version: '18' # Choose the node version that matches your development environment
       - name: Clear npm cache
         run: npm cache clean --force
       - run: npm ci
