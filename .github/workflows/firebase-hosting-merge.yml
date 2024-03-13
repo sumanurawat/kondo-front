@@ -12,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14' # Choose the node version that matches your development environment
+      - name: Clear npm cache
+        run: npm cache clean --force
       - run: npm ci
       - run: npm run build
         env:
