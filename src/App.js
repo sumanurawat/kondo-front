@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { auth } from './firebase-config';
+import { auth } from 'firebase-config';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 
-import Profile from './Profile';
+import Profile from 'components/Profile';
 
 function App() {
   const [email, setEmail] = useState('');
