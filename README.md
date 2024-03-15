@@ -1,2 +1,1 @@
-### kondo-21401.web.app
-### kondo-21401.firebaseapp.com
+[Visit Kondo!](https://kondo-21401.web.app)
