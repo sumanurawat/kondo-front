@@ -1,7 +1,7 @@
 // src/Profile.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase-config';
+import { auth } from 'firebase-config';
 import { signOut } from 'firebase/auth';
 
 function Profile() {
