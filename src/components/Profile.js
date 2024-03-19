@@ -24,7 +24,7 @@ function Profile() {
     };
 
     fetchUserProfile();
-  }, [user]);
+  }, [navigate, user]);
 
   const handleLogout = async () => {
     try {
