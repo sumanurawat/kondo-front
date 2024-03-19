@@ -1,0 +1,35 @@
+.update-profile-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+  }
+  
+  .update-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .update-form label {
+    margin-top: 10px;
+  }
+  
+  .update-form input,
+  .update-form textarea {
+    margin-bottom: 10px;
+    padding: 8px;
+  }
+  
+  .update-form .update-btn {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 15px 20px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .update-form .update-btn:hover {
+    background-color: #45a049;
+  }
+  
