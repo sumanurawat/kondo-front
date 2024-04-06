@@ -32,3 +32,5 @@ jest/
 
 # API keys or other sensitive information
 .env
+.idea/
+
