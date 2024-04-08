@@ -1,58 +1,76 @@
-// src/components/Profile.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from 'firebase-config';
-import { signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from 'firebase-config'; // Adjust the import path as necessary
+import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+import UserArticlesList from 'components/UserArticlesList/UserArticlesList'; // Import the new component
+
+
 function Profile() {
   const navigate = useNavigate();
-  const user = auth.currentUser;
   const [profileData, setProfileData] = useState(null);
+  const [userArticles, setUserArticles] = useState([]);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const userRef = doc(db, "users", user.uid);
-        const userProfile = await getDoc(userRef);
-        if (userProfile.exists()) {
-          setProfileData(userProfile.data());
-        } else {
-          // User does not have a profile yet, could navigate to create profile
-          navigate('/update-profile');
-        }
+        fetchUserProfile(user.uid);
+      } else {
+        // If no user is logged in, navigate to login or another appropriate page
+        navigate('/login');
       }
-    };
+    });
 
-    fetchUserProfile();
-  }, [navigate, user]);
+    // Clean up the subscription
+    return () => unsubscribe();
+  }, [navigate]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/'); // Navigate to the root or login page after logout
-    } catch (error) {
-      console.error('Logout failed', error);
+  const fetchUserProfile = async (userId) => {
+    // Fetch user profile
+    const userRef = doc(db, "users", userId);
+    const userProfile = await getDoc(userRef);
+    if (userProfile.exists()) {
+      setProfileData(userProfile.data());
+    } else {
+      navigate('/update-profile');
     }
+
+    // Fetch user's articles
+    const articlesRef = collection(db, "articles");
+    const q = query(articlesRef, where("userId", "==", userId));
+    const querySnapshot = await getDocs(q);
+    const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setUserArticles(articles);
   };
 
-  const handleEditProfile = () => {
-    // Navigate to the update profile page
-    navigate('/update-profile');
+  const handleLogout = async () => {
+    await signOut(auth).catch((error) => {
+      console.error('Logout failed', error);
+    });
+    navigate('/');
+  };
+
+  const handleDelete = async (articleId) => {
+    const articleRef = doc(db, "articles", articleId);
+    await deleteDoc(articleRef);
+    // Update the UI by removing the deleted article
+    setUserArticles(userArticles.filter(article => article.id !== articleId));
   };
 
   return (
     <div>
       <h1>Welcome to your profile</h1>
-      {user && <p>Email: {user.email}</p>}
       {profileData && (
         <>
+          <p>Email: {auth.currentUser?.email}</p>
           <p>Name: {profileData.name}</p>
           <p>Date of Birth: {profileData.dateOfBirth}</p>
           <p>Location: {profileData.location}</p>
+          <button onClick={() => navigate('/update-profile')}>Edit Profile</button>
+          <button onClick={handleLogout}>Logout</button>
         </>
       )}
-      <button onClick={handleEditProfile}>Edit Profile</button>
-      <button onClick={handleLogout}>Logout</button>
+      <UserArticlesList articles={userArticles} onDelete={handleDelete} />
     </div>
   );
 }

@@ -1,0 +1,69 @@
+.articles-container {
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #f0f0f0; /* Light gray background */
+  border-radius: 8px; /* Rounded corners for the container */
+  max-width: 800px; /* Set a max-width for better reading experience on large screens */
+}
+
+/* Style the list to remove bullets and padding */
+ul {
+  list-style-type: none; /* Remove bullets */
+  padding: 0; /* Remove default padding */
+  margin: 0; /* Remove default margin */
+}
+
+.article-item {
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 5px;
+  border: 1px solid #ddd; /* Add a border for distinction */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Stronger shadow for more depth */
+  transition: box-shadow 0.3s ease; /* Smooth transition for shadow on hover */
+}
+
+.article-item:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.25); /* Enhanced shadow when hovered */
+}
+
+.article-title {
+  font-weight: bold;
+  color: #333; /* Darker text for the title */
+  margin-bottom: 10px;
+}
+
+.article-body {
+  color: #666; /* Lighter text for the body */
+  margin-bottom: 15px; /* Add space before buttons */
+}
+
+.button {
+  padding: 10px 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer; /* Cursor pointer to indicate it's clickable */
+  transition: all 0.2s; /* Smooth transition for all properties */
+  align-self: flex-start; /* Align buttons to the start of the flex container */
+}
+
+.edit-button {
+  background-color: #4CAF50; /* Green background for edit */
+  color: white;
+}
+
+.edit-button:hover {
+  background-color: #45a049; /* Slightly darker green on hover */
+}
+
+.delete-button {
+  background-color: #f44336; /* Red background for delete */
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #da190b; /* Slightly darker red on hover */
+}
