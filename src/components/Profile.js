@@ -12,6 +12,25 @@ function Profile() {
   const [userArticles, setUserArticles] = useState([]);
 
   useEffect(() => {
+
+     const fetchUserProfile = async (userId) => {
+       // Fetch user profile
+       const userRef = doc(db, "users", userId);
+       const userProfile = await getDoc(userRef);
+       if (userProfile.exists()) {
+         setProfileData(userProfile.data());
+       } else {
+         navigate('/update-profile');
+       }
+
+       // Fetch user's articles
+       const articlesRef = collection(db, "articles");
+       const q = query(articlesRef, where("userId", "==", userId));
+       const querySnapshot = await getDocs(q);
+       const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+       setUserArticles(articles);
+     };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchUserProfile(user.uid);
@@ -25,23 +44,7 @@ function Profile() {
     return () => unsubscribe();
   }, [navigate]);
 
-  const fetchUserProfile = async (userId) => {
-    // Fetch user profile
-    const userRef = doc(db, "users", userId);
-    const userProfile = await getDoc(userRef);
-    if (userProfile.exists()) {
-      setProfileData(userProfile.data());
-    } else {
-      navigate('/update-profile');
-    }
 
-    // Fetch user's articles
-    const articlesRef = collection(db, "articles");
-    const q = query(articlesRef, where("userId", "==", userId));
-    const querySnapshot = await getDocs(q);
-    const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setUserArticles(articles);
-  };
 
   const handleLogout = async () => {
     await signOut(auth).catch((error) => {
