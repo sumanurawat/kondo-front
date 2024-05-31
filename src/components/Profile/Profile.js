@@ -3,18 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from 'firebase-config'; 
 import { signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import UserArticlesList from 'components/UserArticlesList/UserArticlesList'; 
-import BinderTile from 'components/Binder/BinderTile/BinderTile'; // Import BinderTile component
-import 'components/Profile/Profile.css'; // Import CSS for styling
+import { doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import BinderTile from 'components/Binder/BinderTile/BinderTile'; 
+import 'components/Profile/Profile.css'; 
 
 function Profile() {
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState(null);
-  const [userArticles, setUserArticles] = useState([]);
   const [showBinderForm, setShowBinderForm] = useState(false);
   const [newBinderTitle, setNewBinderTitle] = useState('');
-  const [binders, setBinders] = useState([]); // State to store binders
+  const [binders, setBinders] = useState([]); 
 
   // Function to fetch binders from Firestore
   const fetchBinders = async () => {
@@ -38,12 +36,6 @@ function Profile() {
       } else {
         navigate('/update-profile');
       }
-
-      const articlesRef = collection(db, "articles");
-      const q = query(articlesRef, where("userId", "==", userId));
-      const querySnapshot = await getDocs(q);
-      const articles = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setUserArticles(articles);
     };
 
     // Listen for authentication state changes
@@ -66,12 +58,6 @@ function Profile() {
     navigate('/');
   };
 
-  const handleDelete = async (articleId) => {
-    const articleRef = doc(db, "articles", articleId);
-    await deleteDoc(articleRef);
-    setUserArticles(userArticles.filter(article => article.id !== articleId));
-  };
-
   const handleCreateBinderClick = () => {
     setShowBinderForm(true);
   };
@@ -88,7 +74,6 @@ function Profile() {
         user_id: auth.currentUser.uid, 
       };
 
-      // Add the new binder to Firestore (Firestore will auto-generate the ID)
       const newBinderRef = await addDoc(collection(db, 'binders'), binderData);
 
       console.log("Created binder with ID:", newBinderRef.id);
@@ -105,34 +90,35 @@ function Profile() {
   };
 
   return (
-    <div>
-      <h1>Welcome to your profile</h1>
-      {profileData && (
-        <>
-          <p>Email: {auth.currentUser?.email}</p>
-          <p>Name: {profileData.name}</p>
-          <p>Date of Birth: {profileData.dateOfBirth}</p>
-          <p>Location: {profileData.location}</p>
-          <button onClick={() => navigate('/update-profile')}>Edit Profile</button>
-          <button onClick={handleLogout}>Logout</button>
-        </>
-      )}
-      <UserArticlesList articles={userArticles} onDelete={handleDelete} />
-
-      <h2>Your Binders</h2>
-      <div className="binder-tiles-container">
-        {binders.map((binder) => (
-          <BinderTile key={binder.id} binder={binder} />
-        ))}
+    <div className="profile-container">
+      <div className="profile-header">
+        <h1>Kondo</h1>
+        {profileData && (
+          <div className="user-info">
+            <p className="name">Welcome, {profileData.name}!</p> {/* Large name */}
+            {profileData.bio && <p className="bio">{profileData.bio}</p>} {/* Bio below name */}
+            <p>Email: {auth.currentUser?.email}</p>
+            <button onClick={() => navigate('/update-profile')}>Edit Profile</button>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
+        )}
       </div>
 
-      <div className="create-binder-container">
-        <button 
-          className="create-binder-button" 
-          onClick={handleCreateBinderClick}
-        >
-          + Create New Binder
-        </button>
+      <div className="binders-section">
+        <h2>Your Binders</h2>
+        <div className="binder-tiles-container">
+          {binders.map((binder) => (
+            <BinderTile key={binder.id} binder={binder} />
+          ))}
+        </div>
+        <div className="create-binder-container">
+          <button 
+            className="create-binder-button" 
+            onClick={handleCreateBinderClick}
+          >
+            + Create New Binder
+          </button>
+        </div>
       </div>
 
       {showBinderForm && (
@@ -147,7 +133,6 @@ function Profile() {
           <button onClick={() => setShowBinderForm(false)}>Cancel</button>
         </div>
       )}
-
     </div>
   );
 }

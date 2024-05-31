@@ -11,10 +11,8 @@ function Header() {
       <nav>
         {currentUser && (
           <ul className="nav-links">
-            {/* Use the Link component as a button */}
             <li><Link to="/home" className="nav-link">Home</Link></li>
             <li><Link to="/profile" className="nav-link">Profile</Link></li>
-            <li><Link to="/write" className="nav-link">Write</Link></li>
           </ul>
         )}
       </nav>
