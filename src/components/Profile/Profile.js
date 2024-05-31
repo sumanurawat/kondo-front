@@ -16,6 +16,19 @@ function Profile() {
   const [newBinderTitle, setNewBinderTitle] = useState('');
   const [binders, setBinders] = useState([]); // State to store binders
 
+  // Function to fetch binders from Firestore
+  const fetchBinders = async () => {
+    if (auth.currentUser) {
+      const q = query(collection(db, 'binders'), where('user_id', '==', auth.currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      const binderData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setBinders(binderData);
+    }
+  };
+
   useEffect(() => {
     const fetchUserProfile = async (userId) => {
       const userRef = doc(db, "users", userId);
@@ -33,32 +46,17 @@ function Profile() {
       setUserArticles(articles);
     };
 
+    // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         fetchUserProfile(user.uid);
+        fetchBinders(); // Fetch binders when user is logged in
       } else {
         navigate('/login');
       }
     });
 
     return () => unsubscribe();
-  }, [navigate]);
-
-  // Fetch binders when the component mounts and when the user changes
-  useEffect(() => {
-    const fetchBinders = async () => {
-      if (auth.currentUser) {
-        const q = query(collection(db, 'binders'), where('user_id', '==', auth.currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        const binderData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setBinders(binderData);
-      }
-    };
-
-    fetchBinders();
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -94,6 +92,9 @@ function Profile() {
       const newBinderRef = await addDoc(collection(db, 'binders'), binderData);
 
       console.log("Created binder with ID:", newBinderRef.id);
+
+      // Re-fetch binders to update the UI
+      await fetchBinders();
 
     } catch (error) {
       console.error("Error creating binder:", error);
