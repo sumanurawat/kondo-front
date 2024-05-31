@@ -5,6 +5,7 @@ import { auth, db } from 'firebase-config';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, collection, query, where, getDocs, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import UserArticlesList from 'components/UserArticlesList/UserArticlesList'; 
+import BinderTile from 'components/Binder/BinderTile/BinderTile'; // Import BinderTile component
 import 'components/Profile/Profile.css'; // Import CSS for styling
 
 function Profile() {
@@ -13,6 +14,7 @@ function Profile() {
   const [userArticles, setUserArticles] = useState([]);
   const [showBinderForm, setShowBinderForm] = useState(false);
   const [newBinderTitle, setNewBinderTitle] = useState('');
+  const [binders, setBinders] = useState([]); // State to store binders
 
   useEffect(() => {
     const fetchUserProfile = async (userId) => {
@@ -40,6 +42,23 @@ function Profile() {
     });
 
     return () => unsubscribe();
+  }, [navigate]);
+
+  // Fetch binders when the component mounts and when the user changes
+  useEffect(() => {
+    const fetchBinders = async () => {
+      if (auth.currentUser) {
+        const q = query(collection(db, 'binders'), where('user_id', '==', auth.currentUser.uid));
+        const querySnapshot = await getDocs(q);
+        const binderData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBinders(binderData);
+      }
+    };
+
+    fetchBinders();
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -98,6 +117,13 @@ function Profile() {
         </>
       )}
       <UserArticlesList articles={userArticles} onDelete={handleDelete} />
+
+      <h2>Your Binders</h2>
+      <div className="binder-tiles-container">
+        {binders.map((binder) => (
+          <BinderTile key={binder.id} binder={binder} />
+        ))}
+      </div>
 
       <div className="create-binder-container">
         <button 

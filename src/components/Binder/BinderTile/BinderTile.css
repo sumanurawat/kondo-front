@@ -1,0 +1,25 @@
+/* BinderTile.css */
+.binder-tile {
+    background-color: #f0f0f0; /* Light gray background */
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 5px;
+    text-decoration: none; /* Remove underline from link */
+    color: inherit; /* Inherit color from parent */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center title vertically */
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth transition on hover */
+    min-width: 200px; /* Set a minimum width for the tile */
+  }
+  
+  .binder-tile:hover {
+    background-color: #e0e0e0; /* Slightly darker gray on hover */
+  }
+  
+  .binder-title {
+    font-weight: bold;
+  }
