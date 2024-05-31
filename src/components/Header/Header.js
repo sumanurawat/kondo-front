@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from 'hooks/useAuth';
-import './Header.css'; // Import the CSS file
+import 'components/Header/Header.css'; // Import the CSS file
 
 function Header() {
   const { currentUser } = useAuth(); // This hook checks if a user is logged in

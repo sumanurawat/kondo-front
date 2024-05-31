@@ -34,3 +34,4 @@ jest/
 .env
 .idea/
 
+.DS_Store
