@@ -67,21 +67,14 @@ function Profile() {
     try {
       const binderData = {
         title: newBinderTitle,
-        description: '', // You can add a default description if needed
+        creation_date: serverTimestamp(),
+        user_id: auth.currentUser.uid, 
       };
 
-      // Call a Firestore function to create a new binder document
-      const newBinderRef = await addDoc(collection(db, 'binders'), {
-        ...binderData,
-        userId: auth.currentUser.uid, // Assuming you want to associate the binder with the current user
-        createdAt: serverTimestamp(),
-        sources: [], 
-      });
+      // Add the new binder to Firestore (Firestore will auto-generate the ID)
+      const newBinderRef = await addDoc(collection(db, 'binders'), binderData);
 
       console.log("Created binder with ID:", newBinderRef.id);
-
-      // Optionally, navigate to the new binder's view
-      // navigate(`/binder/${newBinderRef.id}`);
 
     } catch (error) {
       console.error("Error creating binder:", error);
