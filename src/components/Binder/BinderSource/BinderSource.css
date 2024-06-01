@@ -1,0 +1,38 @@
+/* BinderSource.css */
+.source-tile {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .source-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .source-content {
+    margin-bottom: 10px;
+  }
+  
+  .button-group {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .button-group button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    margin-left: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .button-group button:hover {
+    background-color: #0056b3;
+  }
