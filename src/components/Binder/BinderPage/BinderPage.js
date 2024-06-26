@@ -3,10 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from 'firebase-config';
 import { 
-  doc, getDoc, collection, query, 
-  where, getDocs, addDoc, serverTimestamp, 
-  deleteDoc, updateDoc 
-} from 'firebase/firestore';
+    doc, getDoc, collection, query, 
+    where, getDocs, addDoc, serverTimestamp, 
+    deleteDoc, updateDoc 
+  } from 'firebase/firestore';
 import './BinderPage.css'; 
 import BinderSource from '../BinderSource/BinderSource';
 
@@ -17,6 +17,12 @@ function BinderPage() {
   const [showSourceForm, setShowSourceForm] = useState(false);
   const [newSourceTitle, setNewSourceTitle] = useState('');
   const [newSourceContent, setNewSourceContent] = useState('');
+  const [activeSourceId, setActiveSourceId] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState(''); 
+
+  // State to manage the view toggle
+  const [showSources, setShowSources] = useState(false); 
 
   useEffect(() => {
     const fetchBinder = async () => {
@@ -33,7 +39,6 @@ function BinderPage() {
     fetchBinder();
   }, [binderId]); 
 
-  // useCallback for fetchSources
   const fetchSources = useCallback(async () => {
     if (binderId) {
       const q = query(collection(db, 'binder_sources'), where('binder_id', '==', binderId));
@@ -72,10 +77,7 @@ function BinderPage() {
       };
 
       await addDoc(collection(db, 'binder_sources'), sourceData);
-
-      // Re-fetch sources to update the UI
       fetchSources(); 
-
       setShowSourceForm(false);
       setNewSourceTitle('');
       setNewSourceContent('');
@@ -101,15 +103,40 @@ function BinderPage() {
         title: updatedTitle,
         content: updatedContent,
       });
-
-      // Update the sources state to reflect the changes
       setSources(sources.map(source => 
         source.id === sourceId ? { ...source, title: updatedTitle, content: updatedContent } : source
       ));
-
     } catch (error) {
       console.error("Error updating source:", error);
     }
+  };
+
+  const handleSourceClick = (sourceId) => {
+    setActiveSourceId(activeSourceId === sourceId ? null : sourceId);
+  };
+
+  const handleNewMessageChange = (e) => {
+    setNewMessage(e.target.value);
+  };
+
+  const handleSendMessage = () => {
+    if (newMessage.trim() !== "") {
+      setChatMessages([
+        ...chatMessages,
+        { text: newMessage, timestamp: Date.now(), sender: 'user' }
+      ]);
+      setNewMessage('');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  const toggleView = () => {
+    setShowSources(!showSources);
   };
 
   return (
@@ -121,19 +148,67 @@ function BinderPage() {
             Created: {binder.creation_date.toDate().toLocaleDateString()}
           </p>
 
-          <button onClick={handleAddSourceClick} className="add-source-button">
-            Add Source
-          </button>
+          {/* Toggle Switch */}
+          <div className="toggle-switch" onClick={toggleView}>
+            <span className={`switch-option ${!showSources ? 'active' : ''}`}>Chat</span>
+            <span className={`switch-option ${showSources ? 'active' : ''}`}>Sources</span>
+          </div>
 
-          <div className="sources-container">
-            {sources.map((source) => (
-              <BinderSource 
-                key={source.id} 
-                source={source} 
-                onDelete={handleDeleteSource} 
-                onEdit={handleEditSource} 
-              />
-            ))}
+          <div className="binder-content">
+            {/* Source List (Conditionally Rendered) */}
+            <div className={`sources-list ${!showSources ? 'hidden' : ''}`}> 
+              <button onClick={handleAddSourceClick} className="add-source-button">
+                Add Source
+              </button>
+              {sources.map((source) => (
+                <BinderSource
+                  key={source.id}
+                  source={source}
+                  isActive={activeSourceId === source.id}
+                  onClick={() => handleSourceClick(source.id)}
+                  onDelete={handleDeleteSource}
+                  onEdit={handleEditSource}
+                />
+              ))}
+            </div>
+
+            {/* Main Content Area */}
+            <div className="main-content">
+              {/* Show chat interface in Chat View, source content in Sources View */}
+              {!showSources ? ( 
+                <>
+                  <div className="chat-messages">
+                    {chatMessages.map((message, index) => (
+                      <div
+                        key={index}
+                        className={`chat-message ${message.sender === 'user' ? 'user-message' : 'binder-message'}`}
+                      >
+                        <span className="message-text">{message.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="chat-input">
+                    <input
+                      type="text"
+                      placeholder="Type your message..."
+                      value={newMessage}
+                      onChange={handleNewMessageChange}
+                      onKeyPress={handleKeyPress} 
+                    />
+                    <button onClick={handleSendMessage}>Send</button>
+                  </div>
+                </>
+              ) : ( 
+                activeSourceId && sources.find(source => source.id === activeSourceId) ? (
+                  <div className="active-source-content">
+                    <h3>{sources.find(source => source.id === activeSourceId).title}</h3>
+                    <p>{sources.find(source => source.id === activeSourceId).content}</p>
+                  </div>
+                ) : (
+                  <p>Select a source to view its content.</p>
+                )
+              )}
+            </div>
           </div>
         </>
       )}
@@ -141,13 +216,13 @@ function BinderPage() {
       {showSourceForm && (
         <div className="source-form-popup">
           <h3>Add New Source</h3>
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Source Title"
             value={newSourceTitle}
             onChange={handleSourceTitleChange}
           />
-          <textarea 
+          <textarea
             placeholder="Source Content"
             value={newSourceContent}
             onChange={handleSourceContentChange}

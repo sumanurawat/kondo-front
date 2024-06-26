@@ -1,7 +1,8 @@
+// components/Binder/BinderSource/BinderSource.js
 import React, { useState } from 'react';
 import './BinderSource.css';
 
-function BinderSource({ source, onDelete, onEdit }) {
+function BinderSource({ source, onClick, onDelete, onEdit, isActive }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(source.title);
   const [editContent, setEditContent] = useState(source.content);
@@ -22,17 +23,20 @@ function BinderSource({ source, onDelete, onEdit }) {
   };
 
   return (
-    <div className="source-tile">
+    <div
+      className={`source-tile ${isActive ? 'active' : ''}`}
+      onClick={onClick}
+    >
       {isEditing ? (
         <>
-          <input 
-            type="text" 
-            value={editTitle} 
-            onChange={(e) => setEditTitle(e.target.value)} 
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
           />
-          <textarea 
-            value={editContent} 
-            onChange={(e) => setEditContent(e.target.value)} 
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
           />
           <button onClick={handleSaveEdit}>Save</button>
           <button onClick={handleCancelEdit}>Cancel</button>
@@ -40,7 +44,9 @@ function BinderSource({ source, onDelete, onEdit }) {
       ) : (
         <>
           <h3 className="source-title">{source.title}</h3>
-          <p className="source-content">{source.content}</p>
+          {isActive && ( // Conditionally render content if active
+            <p className="source-content">{source.content}</p>
+          )}
           <div className="button-group">
             <button onClick={handleEditClick}>Edit</button>
             <button onClick={() => onDelete(source.id)}>Delete</button>
