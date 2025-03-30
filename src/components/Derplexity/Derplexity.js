@@ -17,14 +17,14 @@ function Derplexity() {
     if (history && history.length > 0) {
       setMessages(history);
     }
-  }, []);
+  }, [chatService]); // Add chatService as dependencytService]); // Add chatService as dependency
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
     // Save updated messages to localStorage
     chatService.saveChatHistory(messages);
-  }, [messages]);
+  }, [messages, chatService]); // Add chatService as dependencyhatService]); // Add chatService as dependency
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
