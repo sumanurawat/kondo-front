@@ -53,10 +53,24 @@ export const createLLMChatService = () => {
    * @returns {String} Formatted prompt for LLM
    */
   const formatPrompt = (messages, currentUserMessage) => {
-    let formattedPrompt = "You are Derplexity, a helpful and concise assistant. Please answer the following:\n\n";
+    let formattedPrompt = `You are Derplexity, an AI assistant focused on delivering comprehensive, detailed, and accurate information.
+
+Follow these guidelines for your responses:
+1. Provide thorough explanations with complete context and relevant details
+2. Structure your answers with clear sections and formatting when appropriate
+3. Present multiple perspectives on complex or debated topics
+4. Cite your reasoning process and explain how you arrived at conclusions
+5. When uncertain, acknowledge limitations in your knowledge
+6. Match your tone to the complexity and formality of the question
+7. Use lists, comparisons, and examples to illustrate concepts
+8. For technical questions, provide step-by-step explanations
+
+Your goal is to help users gain deeper understanding, not just quick answers.
+
+Conversation history:\n\n`;
     
     // Include conversation history
-    const recentMessages = messages.slice(-5); // Include more context for Gemini
+    const recentMessages = messages.slice(-5); // Include recent context
     
     recentMessages.forEach(msg => {
       const role = msg.sender === 'user' ? 'User' : 'Assistant';
@@ -118,6 +132,9 @@ export const createLLMChatService = () => {
     
     let processedResponse = response.trim();
     
+    // Remove any meta-instructions like "let's delve into..." or "this is just an instruction..."
+    processedResponse = processedResponse.replace(/^(Okay|OK|Let's|Let me|I'll|I will|This shouldn't|This should not).*?\./i, "");
+    
     // Remove any [INST] or [/INST] tags
     processedResponse = processedResponse.replace(/\[INST\]|\[\/INST\]/g, "");
     
@@ -134,8 +151,27 @@ export const createLLMChatService = () => {
       processedResponse = processedResponse.split("system")[0].trim();
     }
     
+    // Remove meta-instructions about how to respond
+    const metaPatterns = [
+      /this (shouldn't|should not) be a part of the response/i,
+      /this is just an instruction the user shouldn't see/i,
+      /the user (shouldn't|should not) see this/i,
+      /do not include this in your response/i
+    ];
+    
+    metaPatterns.forEach(pattern => {
+      const match = processedResponse.match(pattern);
+      if (match) {
+        // Find the sentence containing this pattern and remove it
+        const sentences = processedResponse.split(/(?<=[.!?])\s+/);
+        processedResponse = sentences
+          .filter(s => !pattern.test(s))
+          .join(" ");
+      }
+    });
+    
     // Final cleanup
-    processedResponse = processedResponse.replace(/\s+/g, " ").trim();
+    processedResponse = processedResponse.trim();
     
     // Provide a fallback if we end up with an empty string
     if (!processedResponse) {
@@ -157,7 +193,7 @@ export const createLLMChatService = () => {
   const sendToLLM = async (prompt, retryCount = 0) => {
     try {
       // Use one of the models available in your API key
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent";
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b-001:generateContent";
       
       const payload = {
         contents: [
