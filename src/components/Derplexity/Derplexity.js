@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Derplexity.css';
 import { createLLMChatService } from '../../services/llmService';
+import { marked } from 'marked';
+
+// Configure marked for security
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  headerIds: false,
+  mangle: false
+});
 
 function Derplexity() {
   // Create a chat service instance
@@ -89,19 +98,21 @@ function Derplexity() {
   
   // Format message text with links and code blocks
   const formatMessageText = (text) => {
-    // Convert URLs to links
-    const urlPattern = /https?:\/\/[^\s]+/g;
-    const textWithLinks = text.replace(urlPattern, (url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-    });
+    // Sanitize the text to prevent XSS attacks
+    const sanitizedText = text
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
     
-    // Format code blocks
-    const codePattern = /`([^`]+)`/g;
-    const textWithCode = textWithLinks.replace(codePattern, (_, code) => {
-      return `<code>${code}</code>`;
-    });
+    // Parse markdown
+    let htmlText = marked.parse(sanitizedText);
     
-    return textWithCode;
+    // Add target="_blank" to all links for security
+    htmlText = htmlText.replace(
+      /<a href="([^"]+)">/g,
+      '<a href="$1" target="_blank" rel="noopener noreferrer">'
+    );
+    
+    return htmlText;
   };
 
   // Format timestamp
