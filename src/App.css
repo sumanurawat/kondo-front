@@ -44,7 +44,7 @@
 }
 
 /* Regular pages with Header */
-.app-container:not(.derplexity-page) {
+.app-container:not(.derplexity-page):not(.landing-page) {
   padding-top: 60px; /* Adjust this value based on your Header height */
 }
 
@@ -65,6 +65,14 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
+}
+
+/* Landing page - full width and no padding */
+.landing-page {
+  padding: 0;
+  margin: 0;
+  width: 100vw;
+  min-height: 100vh;
 }
 
 body, html {

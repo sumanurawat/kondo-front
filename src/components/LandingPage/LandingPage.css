@@ -1,0 +1,352 @@
+/* Modern Landing Page Styling */
+:root {
+  --background-color: #ffffff;
+  --card-bg-color: #f8fafc;
+  --card-primary-bg: rgba(59, 130, 246, 0.05);
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent-color: #3b82f6;
+  --border-color: rgba(203, 213, 225, 0.5);
+  --shadow-color: rgba(15, 23, 42, 0.08);
+}
+
+html.dark-theme {
+  --background-color: #0f172a;
+  --card-bg-color: #1e293b;
+  --card-primary-bg: rgba(59, 130, 246, 0.15);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent-color: #60a5fa;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow-color: rgba(0, 0, 0, 0.2);
+}
+
+.landing-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  padding: 0;
+}
+
+/* Navigation */
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-color);
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: var(--card-primary-bg);
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.username:hover {
+  background-color: var(--card-primary-bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px var(--shadow-color);
+}
+
+.nav-right {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.nav-button:hover {
+  background-color: rgba(203, 213, 225, 0.1);
+}
+
+.nav-button.primary {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+}
+
+.nav-button.primary:hover {
+  background-color: #2563eb; /* Darker blue on hover */
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Main Content */
+.landing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Hero Section */
+.hero-section {
+  text-align: center;
+  margin: 40px 0 60px;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  background: linear-gradient(to right, var(--accent-color), #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  /* Make it lowercase and italic for the casual "i'm kind of a nerd" vibe */
+  text-transform: lowercase;
+  font-style: italic;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  color: var(--text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  /* More casual styling */
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+/* Features Grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 60px;
+}
+
+.feature-card {
+  background-color: var(--card-bg-color);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px var(--shadow-color), 
+              0 10px 15px -3px var(--shadow-color);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  color: var(--text-primary);
+  min-height: 200px;
+  animation: fadeIn 1s ease-out 0.4s both;
+}
+
+.feature-card:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.feature-card:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 
+              0 6px 6px rgba(0, 0, 0, 0.06);
+}
+
+.feature-card.primary {
+  background: var(--card-primary-bg);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.feature-card.primary:hover {
+  border-color: var(--accent-color);
+}
+
+.feature-content {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.feature-card h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--text-primary);
+}
+
+.feature-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+}
+
+.feature-illustration {
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  opacity: 0.2;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-illustration {
+  opacity: 0.3;
+  transform: scale(1.1);
+}
+
+.feature-illustration svg {
+  width: 100%;
+  height: 100%;
+  color: var(--accent-color);
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+}
+
+.card-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent-color);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.card-button:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.card-button svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.card-button:hover svg {
+  transform: translateX(3px);
+}
+
+.card-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.card-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Footer */
+.landing-footer {
+  padding: 24px 32px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 36px;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .landing-nav {
+    padding: 16px;
+  }
+  
+  .landing-content {
+    padding: 0 16px;
+  }
+}
+
+/* Add this to your CSS for the quirky section */
+.quirky-section {
+  margin: 20px auto 60px;
+  max-width: 700px;
+  padding: 0 20px;
+  opacity: 0.7;
+}
+
+.quirky-text {
+  font-style: italic;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 14px;
+  animation: fadeIn 1s ease-out 1s both;
+}
