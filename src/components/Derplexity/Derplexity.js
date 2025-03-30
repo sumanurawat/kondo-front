@@ -17,29 +17,39 @@ function Derplexity() {
     if (history && history.length > 0) {
       setMessages(history);
     }
-  }, [chatService]); // Add chatService as dependencytService]); // Add chatService as dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
     // Save updated messages to localStorage
     chatService.saveChatHistory(messages);
-  }, [messages, chatService]); // Add chatService as dependencyhatService]); // Add chatService as dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
+  // Handle input changes
+  // Remove this function if not used
+  // const handleInputChange = (e) => {
+  //   setInput(e.target.value);
+  // };
+  
+  // OR use it directly in your input onChange handler:
+  // onChange={(e) => setInput(e.target.value)}
+
+  // Send message when Enter key is pressed
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(e);
+    }
   };
 
-  // Clear chat history
-  const handleClearChat = () => {
-    chatService.clearChatHistory();
-    setMessages([]);
-  };
-
+  // Handle sending messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (input.trim() === '') return;
@@ -60,30 +70,44 @@ function Derplexity() {
     } catch (error) {
       console.error("Error in chat flow:", error);
       
-      const errorMessage = { 
-        text: "Sorry, I encountered an error processing your request.", 
+      // Add error message to chat
+      setMessages([...updatedMessages, { 
+        text: "Sorry, I couldn't process your request. Please try again later.", 
         sender: 'bot', 
         timestamp: Date.now() 
-      };
-      
-      setMessages([...updatedMessages, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(e);
-    }
+  // Handle clearing the chat
+  const handleClearChat = () => {
+    setMessages([]);
+    chatService.clearChatHistory();
+  };
+  
+  // Format message text with links and code blocks
+  const formatMessageText = (text) => {
+    // Convert URLs to links
+    const urlPattern = /https?:\/\/[^\s]+/g;
+    const textWithLinks = text.replace(urlPattern, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+    
+    // Format code blocks
+    const codePattern = /`([^`]+)`/g;
+    const textWithCode = textWithLinks.replace(codePattern, (_, code) => {
+      return `<code>${code}</code>`;
+    });
+    
+    return textWithCode;
   };
 
-  const cleanMessageText = (text) => {
-    return text
-      .replace(/^User:\s*/i, '')
-      .replace(/^Assistant:\s*/i, '')
-      .trim();
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -167,30 +191,4 @@ function Derplexity() {
   );
 }
 
-// Add this helper function for formatting messages with links and code
-const formatMessageText = (text) => {
-  // Convert URLs to links
-  const urlPattern = /https?:\/\/[^\s]+/g;
-  const textWithLinks = text.replace(urlPattern, (url) => {
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-  });
-  
-  // Format code blocks
-  const codePattern = /`([^`]+)`/g;
-  const textWithCode = textWithLinks.replace(codePattern, (_, code) => {
-    return `<code>${code}</code>`;
-  });
-  
-  return textWithCode;
-};
-
-// Format timestamp
-const formatTimestamp = (timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
-
 export default Derplexity;
-
-// In the browser console:
-localStorage.removeItem('derplexityMessages');
