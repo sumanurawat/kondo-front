@@ -36,3 +36,39 @@
     transform: rotate(360deg);
   }
 }
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Regular pages with Header */
+.app-container:not(.derplexity-page) {
+  padding-top: 60px; /* Adjust this value based on your Header height */
+}
+
+/* Derplexity full-screen mode */
+.derplexity-page {
+  padding: 0;
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Ensure derplexity container takes full space when in derplexity-page */
+.derplexity-page .derplexity-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}

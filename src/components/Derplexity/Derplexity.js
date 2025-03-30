@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Derplexity.css';
 import { createLLMChatService } from '../../services/llmService';
 import { marked } from 'marked';
+import { createFileProcessingService } from '../../services/fileProcessingService';
+import { useNavigate } from 'react-router-dom';
 
 // Configure marked for security
 marked.setOptions({
@@ -12,13 +14,22 @@ marked.setOptions({
 });
 
 function Derplexity() {
+  const navigate = useNavigate();
+  
   // Create a chat service instance
   const chatService = useRef(createLLMChatService()).current;
+  const fileService = useRef(createFileProcessingService()).current;
   
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [expandedFiles, setExpandedFiles] = useState({});
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [activeFilePreview, setActiveFilePreview] = useState(null);
 
   // Load chat history from localStorage when component mounts
   useEffect(() => {
@@ -36,6 +47,28 @@ function Derplexity() {
     chatService.saveChatHistory(messages);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
+
+  useEffect(() => {
+    // Check if user prefers dark mode
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Apply dark theme based on system preference
+    document.documentElement.classList.toggle('dark-theme', prefersDarkMode);
+    
+    // Listen for system preference changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      document.documentElement.classList.toggle('dark-theme', e.matches);
+    };
+    
+    // Add event listener
+    mediaQuery.addEventListener('change', handleChange);
+    
+    // Cleanup
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,28 +91,167 @@ function Derplexity() {
     }
   };
 
+  // Use a unique ID generator for files
+  const generateFileId = () => `file-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+  // Handle file upload
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    setIsProcessingFile(true);
+    setUploadStatus(`Processing ${files.length > 1 ? `${files.length} files` : files[0].name}...`);
+    
+    try {
+      // Process each file sequentially
+      for (const file of files) {
+        // Animated loading text for reading phase
+        setUploadStatus(`Reading ${file.name}...`);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Animated analyzing phase with ellipsis animation
+        let dots = 0;
+        const analyzingInterval = setInterval(() => {
+          dots = (dots + 1) % 4;
+          const ellipsis = '.'.repeat(dots);
+          setUploadStatus(`Analyzing text${ellipsis.padEnd(3, ' ')}`);
+        }, 300);
+        
+        try {
+          // Extract text using the file service
+          const extractedText = await fileService.extractTextFromFile(file);
+          
+          // Clear the animation interval
+          clearInterval(analyzingInterval);
+          
+          // Create a new file object
+          const fileId = generateFileId();
+          const fileObject = {
+            id: fileId,
+            name: file.name,
+            type: file.type,
+            text: extractedText,
+            timestamp: Date.now()
+          };
+          
+          // Add to uploaded files
+          setUploadedFiles(prev => [...prev, fileObject]);
+        } catch (error) {
+          clearInterval(analyzingInterval);
+          throw error;
+        }
+      }
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Set status for user to add context
+      const fileCount = files.length;
+      setUploadStatus(`${fileCount} ${fileCount > 1 ? 'files' : 'file'} ready. Add context...`);
+      
+      // Highlight the text input to prompt user action
+      setTimeout(() => {
+        const inputEl = document.querySelector('.chat-input-container input');
+        inputEl.focus();
+      }, 300);
+      
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setMessages(prev => [...prev, {
+        text: `Error processing file: ${error.message}`,
+        sender: 'bot',
+        timestamp: Date.now(),
+      }]);
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  // Show file preview
+  const showFilePreview = (fileId) => {
+    setActiveFilePreview(fileId);
+  };
+
+  // Toggle file expansion in chat
+  const toggleFileExpansion = (fileId) => {
+    setExpandedFiles(prev => ({
+      ...prev,
+      [fileId]: !prev[fileId]
+    }));
+  };
+
+  // Remove a file before sending
+  const removeUploadedFile = (fileId) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+    if (uploadedFiles.length <= 1) {
+      setUploadStatus('');
+    }
+  };
+
+  // Clear all uploaded files
+  const clearUploadedFiles = () => {
+    setUploadedFiles([]);
+    setUploadStatus('');
+    setActiveFilePreview(null);
+  };
+
   // Handle sending messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (input.trim() === '') return;
+    
+    // Require text input
+    if (input.trim() === '') {
+      // Animate input to indicate text is required
+      const inputEl = document.querySelector('.chat-input-container input');
+      inputEl.classList.add('shake-animation');
+      setTimeout(() => inputEl.classList.remove('shake-animation'), 500);
+      return;
+    }
 
-    // Add user message to chat
-    const userMessage = { text: input, sender: 'user', timestamp: Date.now() };
-    const updatedMessages = [...messages, userMessage];
+    let updatedMessages = [...messages];
+    
+    // First add any pending uploaded files to messages
+    if (uploadedFiles.length > 0) {
+      for (const file of uploadedFiles) {
+        const fileMessage = {
+          id: file.id,
+          text: file.text,
+          sender: 'user',
+          isFileContent: true,
+          fileName: file.name,
+          fileType: file.type,
+          timestamp: file.timestamp
+        };
+        updatedMessages.push(fileMessage);
+      }
+    }
+    
+    // Then add the user text message
+    const userMessage = {
+      text: input,
+      sender: 'user',
+      timestamp: Date.now(),
+      relatedFiles: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.id) : []
+    };
+    
+    updatedMessages.push(userMessage);
+    
+    // Update UI
     setMessages(updatedMessages);
     setInput('');
+    setUploadStatus('');
+    setUploadedFiles([]);
+    setActiveFilePreview(null);
     setIsLoading(true);
 
     try {
-      // Get response from LLM via the chat service
-      const botResponse = await chatService.sendMessage(input, messages);
-      
-      // Update UI with bot response
+      // Send to chat service
+      const botResponse = await chatService.sendMessage(input, updatedMessages.slice(0, -1));
       setMessages([...updatedMessages, botResponse]);
     } catch (error) {
       console.error("Error in chat flow:", error);
-      
-      // Add error message to chat
       setMessages([...updatedMessages, { 
         text: "Sorry, I couldn't process your request. Please try again later.", 
         sender: 'bot', 
@@ -121,10 +293,29 @@ function Derplexity() {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Add file attachment button click handler
+  const handleAttachmentClick = () => {
+    fileInputRef.current.click();
+  };
+
+  // Add this function to handle going back
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="derplexity-container">
       <div className="chat-header">
-        <h1>Derplexity</h1>
+        <div className="header-left">
+          <button className="back-button" onClick={handleBack} title="Go back">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+          <h1>Derplexity</h1>
+        </div>
+        
         <div className="actions">
           {messages.length > 0 && (
             <button className="clear-chat-btn" onClick={handleClearChat}>
@@ -145,21 +336,72 @@ function Derplexity() {
             <p>Ask me anything! I'm here to help answer your questions.</p>
           </div>
         ) : (
-          messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}`}
-            >
-              <div className="message-content">
-                {msg.sender === 'bot' ? (
-                  <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
-                ) : (
-                  msg.text
-                )}
-                <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
+          messages.map((msg, index) => {
+            // Generate a stable ID if one doesn't exist
+            const msgId = msg.id || `msg-${index}`;
+            
+            return (
+              <div
+                key={msgId}
+                className={`message ${
+                  msg.sender === 'user' 
+                    ? 'user-message' 
+                    : 'bot-message'
+                } ${msg.isFileContent ? 'file-message' : ''}`}
+              >
+                <div className={`message-content ${msg.isFileContent ? 'file-content-message' : ''}`}>
+                  {msg.isFileContent ? (
+                    <div className="file-content">
+                      <div 
+                        className={`file-header ${expandedFiles[msgId] ? 'expanded' : ''}`}
+                        onClick={() => toggleFileExpansion(msgId)}
+                      >
+                        <div className="file-header-main">
+                          <div className="file-icon">
+                            {msg.fileType?.includes('pdf') ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                              </svg>
+                            ) : msg.fileType?.includes('image') ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                              </svg>
+                            )}
+                          </div>
+                          <div className="file-details">
+                            <span className="file-name">{msg.fileName}</span>
+                            <span className="file-meta">Document</span>
+                          </div>
+                        </div>
+                        <div className="expand-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </div>
+                      </div>
+                      
+                      <div className={`file-text ${expandedFiles[msgId] ? 'show' : ''}`}>
+                        <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
+                      </div>
+                    </div>
+                  ) : msg.sender === 'bot' ? (
+                    <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
+                  ) : (
+                    <div>{msg.text}</div>
+                  )}
+                  <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         {isLoading && (
           <div className="message bot-message">
@@ -174,18 +416,120 @@ function Derplexity() {
       </div>
       
       <div className="chat-input-container">
-        <div className="input-wrapper">
+        {uploadedFiles.length > 0 && (
+          <div className="file-previews-container">
+            <div className="file-previews">
+              {uploadedFiles.map(file => (
+                <div 
+                  key={file.id} 
+                  className={`file-preview ${activeFilePreview === file.id ? 'active' : ''}`}
+                  onClick={() => showFilePreview(file.id)}
+                >
+                  <div className="file-preview-icon">
+                    {file.type.includes('pdf') ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                    ) : file.type.includes('image') ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="file-preview-name">{file.name}</span>
+                  <button 
+                    className="remove-file-btn" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeUploadedFile(file.id);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {activeFilePreview && (
+              <div className="file-content-preview">
+                <div className="file-content-preview-header">
+                  <h3>{uploadedFiles.find(f => f.id === activeFilePreview)?.name}</h3>
+                  <button className="close-preview-btn" onClick={() => setActiveFilePreview(null)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+                <div className="file-content-preview-body">
+                  {uploadedFiles.find(f => f.id === activeFilePreview)?.text.substring(0, 500)}
+                  {uploadedFiles.find(f => f.id === activeFilePreview)?.text.length > 500 ? '...' : ''}
+                </div>
+              </div>
+            )}
+
+            {uploadedFiles.length > 0 && (
+              <div className="file-actions">
+                <button className="clear-files-btn" onClick={clearUploadedFiles}>
+                  Clear all files
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Input wrapper */}
+        <div className="input-wrapper" data-status={isProcessingFile ? uploadStatus : ''}>
+          <button 
+            className={`attachment-btn ${uploadedFiles.length > 0 ? 'files-attached' : ''}`}
+            onClick={handleAttachmentClick}
+            disabled={isLoading || isProcessingFile}
+            title="Upload document or image"
+          >
+            {uploadedFiles.length > 0 ? (
+              <div className="file-count-badge">{uploadedFiles.length}</div>
+            ) : null}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
+          </button>
+          
           <input
             type="text"
-            placeholder="Ask me anything..."
+            placeholder={
+              isProcessingFile 
+                ? uploadStatus 
+                : uploadedFiles.length > 0 
+                  ? `Add context about ${uploadedFiles.length > 1 ? 'these files' : uploadedFiles[0].name}...` 
+                  : "Ask me anything..."
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            disabled={isLoading}
+            disabled={isLoading || isProcessingFile}
+            className={uploadStatus || uploadedFiles.length > 0 ? 'with-status' : ''}
           />
-          <button onClick={handleSendMessage} disabled={input.trim() === '' || isLoading}>
-            {isLoading ? (
-              'Thinking...'
+          
+          <button 
+            onClick={handleSendMessage} 
+            disabled={input.trim() === '' || isLoading || isProcessingFile}
+          >
+            {isLoading || isProcessingFile ? (
+              'Processing...'
             ) : (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,6 +540,15 @@ function Derplexity() {
               </>
             )}
           </button>
+          
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+            accept=".pdf,.png,.jpg,.jpeg"
+            multiple
+          />
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 // src/App.js
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 import LandingPage from 'components/LandingPage'; 
 import Login from 'components/Login'; 
@@ -13,11 +13,17 @@ import Write from 'components/Write/Write';
 import EditArticle from 'components/EditArticle/EditArticle';
 import BinderPage from 'components/Binder/BinderPage/BinderPage';
 import Derplexity from 'components/Derplexity/Derplexity'; 
+import './App.css'; // Make sure to create this file if it doesn't exist
 
 function App() {
+  const location = useLocation();
+  const isDerplexity = location.pathname === '/derplexity';
+  
   return (
-    <div>
-      <Header />
+    <div className={`app-container ${isDerplexity ? 'derplexity-page' : ''}`}>
+      {/* Only show header on non-Derplexity pages */}
+      {!isDerplexity && <Header />}
+      
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
