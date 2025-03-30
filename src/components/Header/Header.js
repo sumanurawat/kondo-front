@@ -1,20 +1,32 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from 'hooks/useAuth';
-import 'components/Header/Header.css'; // Import the CSS file
+import 'components/Header/Header.css';
 
 function Header() {
-  const { currentUser } = useAuth(); // This hook checks if a user is logged in
+  const { currentUser } = useAuth();
 
   return (
     <header className="header">
       <nav>
-        {currentUser && (
-          <ul className="nav-links">
-            <li><Link to="/home" className="nav-link">Home</Link></li>
-            <li><Link to="/profile" className="nav-link">Profile</Link></li>
-          </ul>
-        )}
+        <ul className="nav-links">
+          {/* Derplexity is available to all users */}
+          <li><Link to="/derplexity" className="nav-link">Derplexity</Link></li>
+          
+          {currentUser && (
+            <>
+              <li><Link to="/home" className="nav-link">Home</Link></li>
+              <li><Link to="/profile" className="nav-link">Profile</Link></li>
+            </>
+          )}
+          
+          {!currentUser && (
+            <>
+              <li><Link to="/login" className="nav-link">Login</Link></li>
+              <li><Link to="/signup" className="nav-link">Signup</Link></li>
+            </>
+          )}
+        </ul>
       </nav>
     </header>
   );

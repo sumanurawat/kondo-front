@@ -11,7 +11,8 @@ import Header from 'components/Header/Header';
 import UpdateProfile from 'components/UpdateProfile/UpdateProfile';
 import Write from 'components/Write/Write';
 import EditArticle from 'components/EditArticle/EditArticle';
-import BinderPage from 'components/Binder/BinderPage/BinderPage'; // Import BinderPage
+import BinderPage from 'components/Binder/BinderPage/BinderPage';
+import Derplexity from 'components/Derplexity/Derplexity'; 
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
         <Route path="/update-profile" element={<UpdateProfile />} />
         <Route path="/write" element={<Write />} />
         <Route path="/EditArticle/:articleId" element={<EditArticle />} />
-        <Route path="/binder/:binderId" element={<BinderPage />} /> {/* New route for BinderPage */}
+        <Route path="/binder/:binderId" element={<BinderPage />} />
+        <Route path="/derplexity" element={<Derplexity />} />
       </Routes>
     </div>
   );
