@@ -20,6 +20,19 @@ function App() {
   const isDerplexity = location.pathname === '/derplexity';
   const isLandingPage = location.pathname === '/';
   
+  // Add a meta viewport tag to ensure proper mobile scaling
+  React.useEffect(() => {
+    // Fix for mobile viewports
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+    
+    return () => {
+      document.getElementsByTagName('head')[0].removeChild(meta);
+    };
+  }, []);
+  
   return (
     <div className={`app-container ${isDerplexity ? 'derplexity-page' : ''} ${isLandingPage ? 'landing-page' : ''}`}>
       {/* Only show header on pages that are not landing or derplexity */}
