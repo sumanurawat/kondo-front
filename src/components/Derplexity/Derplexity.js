@@ -90,60 +90,105 @@ function Derplexity() {
     <div className="derplexity-container">
       <div className="chat-header">
         <h1>Derplexity</h1>
-        <p>Ask me anything...</p>
-        <button onClick={handleClearChat} className="clear-chat-btn">Clear Chat</button>
+        <div className="actions">
+          {messages.length > 0 && (
+            <button className="clear-chat-btn" onClick={handleClearChat}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Clear Chat
+            </button>
+          )}
+        </div>
       </div>
-
+      
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="empty-state">
-            <p>No messages yet. Start a conversation!</p>
+            <h2>Welcome to Derplexity</h2>
+            <p>Ask me anything! I'm here to help answer your questions.</p>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div 
+          messages.map((msg, index) => (
+            <div
               key={index}
-              className={`message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}
+              className={`message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}`}
             >
               <div className="message-content">
-                <p>{cleanMessageText(message.text)}</p>
-                <span className="timestamp">
-                  {new Date(message.timestamp).toLocaleTimeString()}
-                </span>
+                {msg.sender === 'bot' ? (
+                  <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
+                ) : (
+                  msg.text
+                )}
+                <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
               </div>
             </div>
           ))
         )}
         {isLoading && (
           <div className="message bot-message">
-            <div className="message-content">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+            <div className="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-
-      <form onSubmit={handleSendMessage} className="chat-input-container">
-        <input
-          type="text"
-          value={input}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your message..."
-          disabled={isLoading}
-        />
-        <button type="submit" disabled={isLoading || !input.trim()}>
-          Send
-        </button>
-      </form>
+      
+      <div className="chat-input-container">
+        <div className="input-wrapper">
+          <input
+            type="text"
+            placeholder="Ask me anything..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={isLoading}
+          />
+          <button onClick={handleSendMessage} disabled={input.trim() === '' || isLoading}>
+            {isLoading ? (
+              'Thinking...'
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                Send
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
+
+// Add this helper function for formatting messages with links and code
+const formatMessageText = (text) => {
+  // Convert URLs to links
+  const urlPattern = /https?:\/\/[^\s]+/g;
+  const textWithLinks = text.replace(urlPattern, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+  });
+  
+  // Format code blocks
+  const codePattern = /`([^`]+)`/g;
+  const textWithCode = textWithLinks.replace(codePattern, (_, code) => {
+    return `<code>${code}</code>`;
+  });
+  
+  return textWithCode;
+};
+
+// Format timestamp
+const formatTimestamp = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
 
 export default Derplexity;
 
