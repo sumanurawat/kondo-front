@@ -157,7 +157,7 @@ export const createLLMChatService = () => {
   const sendToLLM = async (prompt, retryCount = 0) => {
     try {
       // Use one of the models available in your API key
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent";
       
       const payload = {
         contents: [
