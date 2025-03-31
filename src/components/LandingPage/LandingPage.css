@@ -77,7 +77,7 @@ html, body {
 
 .nav-right {
   display: flex;
-  gap: 12px;
+  align-items: center;
 }
 
 .nav-button {
@@ -382,4 +382,78 @@ html, body {
   text-align: center;
   font-size: 14px;
   animation: fadeIn 1s ease-out 1s both;
+}
+
+/* LinkedIn link styling - improved and more prominent */
+.social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  margin-left: auto; /* Push to the right side */
+}
+
+.social-link.linkedin {
+  color: #0A66C2;
+  border: 1px solid rgba(10, 102, 194, 0.3);
+  background-color: rgba(10, 102, 194, 0.05);
+}
+
+.social-link.linkedin:hover {
+  background-color: rgba(10, 102, 194, 0.1);
+  border-color: rgba(10, 102, 194, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(10, 102, 194, 0.15);
+}
+
+.social-link svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Adjust nav layout for new design without login/signup */
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Make sure the navigation is properly spaced */
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .nav-right {
+    justify-content: flex-end;
+  }
+  
+  .social-link {
+    padding: 8px 10px;
+  }
+  
+  .social-link span {
+    display: none; /* Hide the text on mobile, show only icon */
+  }
+  
+  .social-link svg {
+    width: 22px; /* Slightly larger icon on mobile for easier tapping */
+    height: 22px;
+  }
+  
+  .landing-nav {
+    padding: 16px;
+  }
 }
