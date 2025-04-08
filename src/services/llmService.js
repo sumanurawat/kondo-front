@@ -274,7 +274,7 @@ Your goal is to help users gain deeper understanding without drawing attention t
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1600,  // Increased from 1024 to 1600
+          maxOutputTokens: 3200,  // Doubled from 1600 to 3200
           topP: 0.95,
           topK: 40
         }
@@ -444,7 +444,7 @@ export const createLLMService = () => {
           temperature: 0.3,
           topP: 0.8,
           topK: 40,
-          maxOutputTokens: 1600,  // Increased from 800 to 1600
+          maxOutputTokens: 3200,  // Doubled from 1600 to 3200
         }
       };
       
