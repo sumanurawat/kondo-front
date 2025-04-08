@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Derplexity.css';
-import { createLLMChatService } from '../../services/llmService';
+import { createLLMChatService, createLLMService } from '../../services/llmService';
+import { createSearchService } from '../../services/searchService';
 import { marked } from 'marked';
 import { createFileProcessingService } from '../../services/fileProcessingService';
 import { useNavigate } from 'react-router-dom';
@@ -16,9 +17,11 @@ marked.setOptions({
 function Derplexity() {
   const navigate = useNavigate();
   
-  // Create a chat service instance
+  // Create service instances
   const chatService = useRef(createLLMChatService()).current;
   const fileService = useRef(createFileProcessingService()).current;
+  const searchService = useRef(createSearchService()).current;
+  const llmService = useRef(createLLMService()).current; // Now properly imported
   
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -228,7 +231,7 @@ function Derplexity() {
       }
     }
     
-    // Then add the user text message
+    // Add the user text message
     const userMessage = {
       text: input,
       sender: 'user',
@@ -247,8 +250,27 @@ function Derplexity() {
     setIsLoading(true);
 
     try {
-      // Send to chat service
-      const botResponse = await chatService.sendMessage(input, updatedMessages.slice(0, -1));
+      // Always try to enhance with web search when appropriate - no visual indication to user
+      let searchContext = '';
+      try {
+        // Generate a better search query based on conversation context
+        const searchQuery = await generateSearchQuery(input, messages);
+        
+        // Search using the optimized query
+        const searchResults = await searchService.searchWeb(searchQuery, 5);
+        if (searchResults && searchResults.length > 0) {
+          const resultsWithContent = await searchService.getContentForResults(searchResults, 3);
+          searchContext = searchService.createSearchContext(resultsWithContent);
+        }
+      } catch (searchError) {
+        console.error("Silent search error:", searchError);
+        // Continue without search results
+      }
+      
+      // Always use sendMessageWithContext even if searchContext is empty
+      // This ensures consistent response formatting
+      const botResponse = await chatService.sendMessageWithContext(input, updatedMessages.slice(0, -1), searchContext);
+      
       setMessages([...updatedMessages, botResponse]);
     } catch (error) {
       console.error("Error in chat flow:", error);
@@ -301,6 +323,94 @@ function Derplexity() {
   // Add this function to handle going back
   const handleBack = () => {
     navigate(-1);
+  };
+
+  // Add this function to generate better search queries from conversation context
+
+  const generateSearchQuery = async (userInput, conversationHistory) => {
+    // If the input is already search-friendly, use it directly
+    if (shouldUseWebSearch(userInput)) {
+      return userInput;
+    }
+    
+    // Otherwise, generate a search query from the conversation
+    try {
+      const context = conversationHistory.slice(-3).map(msg => {
+        return `${msg.sender === 'user' ? 'User' : 'Assistant'}: ${msg.text}`
+      }).join('\n\n');
+      
+      const searchQueryPrompt = `
+Based on this conversation, generate a specific, concise search query (maximum 10 words) that would find the most relevant information to help answer the latest user message:
+
+${context}
+
+User: ${userInput}
+
+Search query to use:`;
+
+      const searchQuery = await llmService.sendToLLM(searchQueryPrompt);
+      return searchQuery.replace(/^"(.+)"$/, '$1'); // Remove quotes if present
+    } catch (error) {
+      console.error("Error generating search query:", error);
+      // Fall back to original input
+      return userInput;
+    }
+  };
+
+  const shouldUseWebSearch = (query) => {
+    // Skip web search for very short queries
+    if (query.trim().length < 8) return false;
+    
+    // Skip web search for personal questions or conversation starters
+    const personalPrefixes = [
+      'how are you',
+      'what do you think',
+      'do you like',
+      'can you help',
+      'please help',
+      'could you',
+      'would you',
+      'hello',
+      'hi ',
+      'hey',
+      'thanks',
+      'thank you'
+    ];
+    
+    const lowercaseQuery = query.toLowerCase();
+    if (personalPrefixes.some(prefix => lowercaseQuery.startsWith(prefix))) {
+      return false;
+    }
+    
+    // Use web search for information-seeking queries
+    const informationPrefixes = [
+      'what is',
+      'who is',
+      'where is',
+      'when was',
+      'why is',
+      'how does',
+      'how do',
+      'how to',
+      'define',
+      'explain',
+      'tell me about',
+      'information on',
+      'history of'
+    ];
+    
+    if (informationPrefixes.some(prefix => lowercaseQuery.startsWith(prefix))) {
+      return true;
+    }
+    
+    // Check for question words anywhere (might be information-seeking)
+    const questionWords = ['what', 'who', 'where', 'when', 'why', 'how'];
+    if (questionWords.some(word => lowercaseQuery.includes(` ${word} `))) {
+      return true;
+    }
+    
+    // Default to using web search for longer queries
+    return query.trim().length > 15;
   };
 
   return (

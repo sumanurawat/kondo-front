@@ -84,6 +84,53 @@ Conversation history:\n\n`;
   };
 
   /**
+   * Format prompt for the LLM with web search context
+   * @param {Array} messages - List of message objects
+   * @param {String} currentUserMessage - Current user input
+   * @param {String} webSearchContext - Context from web search
+   * @returns {String} Formatted prompt for LLM
+   */
+  const formatPromptWithContext = (messages, currentUserMessage, webSearchContext) => {
+    let formattedPrompt = `You are Derplexity, an AI assistant focused on delivering comprehensive, detailed, and accurate information.
+
+Follow these guidelines for your responses:
+1. Provide thorough explanations with complete context and relevant details
+2. Structure your answers with clear sections and formatting when appropriate
+3. Present multiple perspectives on complex or debated topics
+4. Cite your reasoning process and explain how you arrived at conclusions
+5. Be confident - don't use phrases like "without additional information" or "I can only offer general observations"
+6. Match your tone to the complexity and formality of the question
+7. Use lists, comparisons, and examples to illustrate concepts
+8. For technical questions, provide step-by-step explanations
+
+Your goal is to help users gain deeper understanding without drawing attention to any limitations in your available information.
+`;
+
+    // Add web search context if available
+    if (webSearchContext && webSearchContext.trim()) {
+      formattedPrompt += `\n\nThe following information from web searches may be relevant to the question:\n${webSearchContext}\n`;
+      formattedPrompt += `\nIncorporate this information naturally in your answers to provide the most accurate and helpful response. Never explicitly mention that you used search results. Always maintain a conversational tone.\n\n`;
+    } else {
+      formattedPrompt += `\n\nIf you're uncertain about any facts, respond based on your best understanding without hedging or mentioning that you lack information. Present your knowledge confidently.\n\n`;
+    }
+
+    formattedPrompt += `Conversation history:\n\n`;
+    
+    // Include conversation history
+    const recentMessages = messages.slice(-5); // Include recent context
+    
+    recentMessages.forEach(msg => {
+      const role = msg.sender === 'user' ? 'User' : 'Assistant';
+      formattedPrompt += `${role}: ${msg.text}\n\n`;
+    });
+    
+    // Add the current user message
+    formattedPrompt += `User: ${currentUserMessage}\n\nAssistant:`;
+    
+    return formattedPrompt;
+  };
+
+  /**
    * Select which messages to include based on token limits
    * @param {Array} messageHistory - Complete message history
    * @param {String} userInput - Current user input
@@ -125,8 +172,25 @@ Conversation history:\n\n`;
     console.log("==== DEBUG: BEFORE PROCESSING ====");
     console.log("Raw response:", response);
     
+    // Extract text from object if needed
+    if (typeof response === 'object' && response !== null) {
+      if (response.text) {
+        response = response.text;
+      } else if (response.response) {
+        response = response.response;
+      } else if (response.candidates && response.candidates[0] && 
+                response.candidates[0].content && 
+                response.candidates[0].content.parts && 
+                response.candidates[0].content.parts[0] && 
+                response.candidates[0].content.parts[0].text) {
+        response = response.candidates[0].content.parts[0].text;
+      } else {
+        return "I'm sorry, but I couldn't generate a response.";
+      }
+    }
+    
     // Check for empty or problematic responses
-    if (!response || response.length < 3) {
+    if (!response || typeof response !== 'string' || response.length < 3) {
       return "I'm sorry, but I couldn't generate a response.";
     }
     
@@ -151,24 +215,29 @@ Conversation history:\n\n`;
       processedResponse = processedResponse.split("system")[0].trim();
     }
     
-    // Remove meta-instructions about how to respond
-    const metaPatterns = [
-      /this (shouldn't|should not) be a part of the response/i,
-      /this is just an instruction the user shouldn't see/i,
-      /the user (shouldn't|should not) see this/i,
-      /do not include this in your response/i
-    ];
+    // Check for truncation indicators
+    const truncationPhrases = ["This covers", "In summary", "To summarize", "In conclusion"];
+    let isTruncated = false;
     
-    metaPatterns.forEach(pattern => {
-      const match = processedResponse.match(pattern);
-      if (match) {
-        // Find the sentence containing this pattern and remove it
-        const sentences = processedResponse.split(/(?<=[.!?])\s+/);
-        processedResponse = sentences
-          .filter(s => !pattern.test(s))
-          .join(" ");
+    for (const phrase of truncationPhrases) {
+      if (processedResponse.endsWith(phrase) || 
+          processedResponse.endsWith(phrase + ".") || 
+          processedResponse.endsWith(phrase + ":")) {
+        processedResponse = processedResponse.substring(0, processedResponse.lastIndexOf(phrase));
+        isTruncated = true;
+        break;
       }
-    });
+    }
+    
+    // If there's any unfinished sentence at the end
+    const lastChar = processedResponse.trim().slice(-1);
+    if (!['.', '!', '?', ':', ';'].includes(lastChar)) {
+      // Try to find the last complete sentence
+      const sentenceMatch = processedResponse.match(/.*?[.!?](?=\s|$)/g);
+      if (sentenceMatch && sentenceMatch.length > 0) {
+        processedResponse = sentenceMatch.join(' ');
+      }
+    }
     
     // Final cleanup
     processedResponse = processedResponse.trim();
@@ -192,8 +261,8 @@ Conversation history:\n\n`;
    */
   const sendToLLM = async (prompt, retryCount = 0) => {
     try {
-      // Use one of the models available in your API key
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b-001:generateContent";
+      // Use Gemini 2.5 Pro
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent";
       
       const payload = {
         contents: [
@@ -207,7 +276,7 @@ Conversation history:\n\n`;
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 1600,  // Increased from 1024 to 1600
           topP: 0.95,
           topK: 40
         }
@@ -271,62 +340,79 @@ Conversation history:\n\n`;
     }
   };
 
-  return {
-    /**
-     * Get the chat history from local storage
-     * @returns {Array} Message history
-     */
-    getChatHistory: () => LocalStorageManager.getChatHistory(),
-    
-    /**
-     * Clear the chat history
-     */
-    clearChatHistory: () => LocalStorageManager.clearChatHistory(),
-    
-    /**
-     * Save the chat history to local storage
-     * @param {Array} messages - Updated message history
-     */
-    saveChatHistory: (messages) => LocalStorageManager.saveMessageToLocalStorage(messages),
-    
-    /**
-     * Send a message to the LLM and get a response
-     * @param {String} userMessage - User's message
-     * @param {Array} messageHistory - Complete message history
-     * @returns {Promise<Object>} Bot's response object
-     */
-    sendMessage: async (userMessage, messageHistory = []) => {
-      try {
-        // Select which messages to include based on token limits
-        const includedMessages = selectMessagesForContext(messageHistory, userMessage);
-        
-        // Format the prompt with selected messages
-        const prompt = formatPrompt(includedMessages, userMessage);
-        
-        // Log helpful information for debugging
-        console.log(`Sending message with ${includedMessages.length} context messages`);
-        
-        // Send to LLM API
-        const data = await sendToLLM(prompt);
-        
-        // Process and clean up the response
-        const cleanedResponse = processResponse(data.response);
-        
-        // Return the formatted bot response
-        return {
-          text: cleanedResponse,
-          sender: 'bot',
-          timestamp: new Date().getTime(),
-          metadata: {
-            model: data.model,
-            apiTimestamp: data.timestamp
-          }
-        };
-      } catch (error) {
-        console.error("Error in sendMessage:", error);
-        throw error;
-      }
+  /**
+   * Send a message to the LLM and get a response
+   * @param {String} message - User's message
+   * @param {Array} messageHistory - Conversation history
+   * @returns {Object} Message object with AI's response
+   */
+  const sendMessage = async (message, messageHistory = []) => {
+    try {
+      // Select which messages to include in the context
+      const messagesForContext = selectMessagesForContext(messageHistory, message);
+      
+      // Format prompt without web search context
+      const prompt = formatPrompt(messagesForContext, message);
+      
+      // Call LLM
+      const response = await sendToLLM(prompt);
+      
+      // Process and return response - response is a string from sendToLLM, not an object with response property
+      return {
+        text: processResponse(response),
+        sender: 'bot',
+        timestamp: Date.now(),
+        metadata: {
+          model: "gemini-pro",
+          apiTimestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error("Error in LLM service:", error);
+      throw error;
     }
+  };
+
+  /**
+   * Send a message to the LLM with additional web search context
+   * @param {String} message - User's message
+   * @param {Array} messageHistory - Conversation history
+   * @param {String} webSearchContext - Context from web search results
+   * @returns {Object} Message object with AI's response
+   */
+  const sendMessageWithContext = async (message, messageHistory, webSearchContext = '') => {
+    try {
+      // Select which messages to include in the context
+      const messagesForContext = selectMessagesForContext(messageHistory, message);
+      
+      // Format prompt with search context
+      const prompt = formatPromptWithContext(messagesForContext, message, webSearchContext);
+      
+      // Call LLM
+      const response = await sendToLLM(prompt);
+      
+      // Process and return response - response is a string, not an object with response property
+      return {
+        text: processResponse(response),
+        sender: 'bot',
+        timestamp: Date.now(),
+        metadata: {
+          model: "gemini-pro",
+          apiTimestamp: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      console.error("Error in LLM service:", error);
+      throw error;
+    }
+  };
+
+  return {
+    sendMessage,
+    sendMessageWithContext,
+    getChatHistory: () => LocalStorageManager.getChatHistory(),
+    saveChatHistory: (messages) => LocalStorageManager.saveMessageToLocalStorage(messages),
+    clearChatHistory: () => LocalStorageManager.clearChatHistory()
   };
 };
 
@@ -346,7 +432,7 @@ export const createLLMService = () => {
   const sendToLLM = async (prompt, retryCount = 0) => {
     try {
       // Use Gemini API
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b-001:generateContent";
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent";
       
       const payload = {
         contents: [
@@ -360,7 +446,7 @@ export const createLLMService = () => {
           temperature: 0.3,
           topP: 0.8,
           topK: 40,
-          maxOutputTokens: 800,
+          maxOutputTokens: 1600,  // Increased from 800 to 1600
         }
       };
       

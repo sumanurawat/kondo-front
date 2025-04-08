@@ -81,9 +81,11 @@ Search query: "${searchQuery}"
 
 ${context}
 
-Please summarize the available information about this search query based on the search results provided. 
+Please summarize the available information about this search query based on the search results provided.
 If the search results don't contain sufficient information, mention this and summarize whatever is available.
 Keep your summary concise (around 200-300 words).
+Always include a "Sources:" section at the end with numbered references matching your in-text citations.
+Format citations like this: [1], [2], etc. and include the full URLs in the Sources section.
 `;
       
       // Send to LLM and get response

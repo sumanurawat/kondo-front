@@ -4,7 +4,16 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 
 const app = express();
-app.use(cors());
+
+// Update the CORS configuration
+const corsOptions = {
+  origin: ['http://localhost:3009', 'http://localhost:3006', 'http://localhost:3000'],
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Web crawling endpoint

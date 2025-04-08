@@ -178,7 +178,13 @@ export const createSearchContext = (enhancedResults) => {
   context += "\nAnswer the user's question based on the information above. ";
   context += "If the information provided is insufficient to answer the question fully, acknowledge this limitation. ";
   context += "Include citations like [1], [2], etc. when referencing information from specific sources. ";
-  context += "Include a 'Sources:' section at the end with numbered references and their URLs.";
+  context += "Include a 'Sources:' section at the end with numbered references and their URLs. ";
+  context += "Make sure to format the sources list similar to this example:\n\n";
+  context += "Sources:\n";
+  
+  enhancedResults.forEach((result, index) => {
+    context += `[${index + 1}] ${result.title} - ${result.link}\n`;
+  });
   
   return context;
 };
