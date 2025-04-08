@@ -330,6 +330,93 @@ Conversation history:\n\n`;
   };
 };
 
+/**
+ * Create a simplified LLM service for direct use
+ */
+export const createLLMService = () => {
+  const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 1000;
+  
+  /**
+   * Send a prompt directly to the LLM and get a response
+   * @param {String} prompt - The prompt to send
+   * @returns {Promise<String>} The LLM response
+   */
+  const sendToLLM = async (prompt, retryCount = 0) => {
+    try {
+      // Use Gemini API
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b-001:generateContent";
+      
+      const payload = {
+        contents: [
+          {
+            parts: [
+              { text: prompt }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 800,
+        }
+      };
+      
+      const response = await fetch(`${apiUrl}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        if (retryCount < MAX_RETRIES) {
+          console.log(`Retrying LLM request (${retryCount + 1}/${MAX_RETRIES})...`);
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          return sendToLLM(prompt, retryCount + 1);
+        }
+        
+        throw new Error(`API Error: ${errorData.error?.message || 'Unknown error'}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error('No response generated');
+      }
+      
+      let generatedText = '';
+      
+      // Extract text from the response
+      data.candidates[0].content.parts.forEach(part => {
+        if (part.text) {
+          generatedText += part.text;
+        }
+      });
+      
+      return generatedText.trim();
+    } catch (error) {
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Retrying after error (${retryCount + 1}/${MAX_RETRIES}): ${error.message}`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return sendToLLM(prompt, retryCount + 1);
+      }
+      
+      console.error("Error sending message to Gemini:", error);
+      throw error;
+    }
+  };
+  
+  return {
+    sendToLLM
+  };
+};
+
 // Export the storage functions for backward compatibility
 export const getChatHistory = LocalStorageManager.getChatHistory;
 export const saveMessageToLocalStorage = LocalStorageManager.saveMessageToLocalStorage;

@@ -5,9 +5,7 @@ html, body {
   padding: 0;
 }
 
-.doogle-main {
-  display: flex;
-  flex-direction: column;
+.doogle-container {
   min-height: calc(100vh - 60px); /* Subtract header height */
   background-color: #f8f9fa;
   color: #202124;
@@ -15,6 +13,14 @@ html, body {
   overflow-y: auto !important;
   padding-top: 20px;
   padding-bottom: 40px;
+}
+
+.doogle-main {
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 95%;
 }
 
 .doogle-header {
@@ -93,12 +99,17 @@ html, body {
   cursor: not-allowed;
 }
 
+/* New two-column layout */
+.search-content {
+  display: flex;
+  gap: 30px;
+  width: 100%;
+}
+
 .search-results {
-  max-width: 650px;
-  width: 90%;
-  margin: 0 auto;
-  padding: 20px 0;
   flex: 1;
+  min-width: 0; /* Prevent flex item from overflowing */
+  max-width: 650px;
 }
 
 .results-count {
@@ -147,30 +158,79 @@ html, body {
   line-height: 1.5;
 }
 
+/* AI Summary Panel Styles */
+.ai-summary-panel {
+  flex: 1;
+  position: sticky;
+  top: 20px;
+  max-width: 450px;
+  min-width: 280px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 43px; /* Align with results */
+}
+
+.ai-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.ai-summary-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #202124;
+}
+
+.summary-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #5f6368;
+}
+
+.spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  margin-right: 8px;
+}
+
+.ai-summary-content {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #202124;
+}
+
+.summary-text {
+  white-space: pre-line;
+}
+
+.summary-error {
+  color: #d93025;
+  padding: 10px;
+  background-color: #fce8e6;
+  border-radius: 4px;
+}
+
+.summary-placeholder,
+.summary-empty {
+  color: #5f6368;
+  font-style: italic;
+}
+
 .empty-state, 
 .error-message {
   text-align: center;
   padding: 20px 0;
   color: #5f6368;
-}
-
-.doogle-info {
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  text-align: left;
-}
-
-.doogle-info h3 {
-  color: #202124;
-  margin-top: 0;
-}
-
-.doogle-info p {
-  line-height: 1.6;
 }
 
 .loading-indicator {
@@ -200,6 +260,26 @@ html, body {
 }
 
 /* Responsive adjustments */
+@media (max-width: 920px) {
+  .search-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .search-results {
+    width: 100%;
+    max-width: 650px;
+  }
+  
+  .ai-summary-panel {
+    width: 100%;
+    max-width: 650px;
+    margin-top: 30px;
+    position: relative;
+    top: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .doogle-header h1 {
     font-size: 40px;

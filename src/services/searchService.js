@@ -1,5 +1,4 @@
 import axios from 'axios';
-import * as cheerio from 'cheerio';
 
 /**
  * Search service for fetching and processing web search results
@@ -59,46 +58,14 @@ export const createSearchService = () => {
     try {
       console.log(`Extracting content from: ${url}`);
       
-      // Add a timeout to prevent hanging on slow responses
-      const response = await axios.get(url, {
-        timeout: 8000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
+      // Use the server proxy instead of direct calls
+      const response = await axios.post('http://localhost:5000/api/crawl', { url });
       
-      const $ = cheerio.load(response.data);
-      
-      // Remove scripts, styles, etc.
-      $('script, style, nav, footer, header, aside, iframe, noscript').remove();
-      
-      // Get main content - try to find actual content containers first
-      let content = '';
-      
-      // Try to find the main content container
-      const possibleContentSelectors = [
-        'main', 'article', '.article', '.post', '.content', 
-        '#content', '.post-content', '.entry-content', 
-        '[role="main"]', '.main-content'
-      ];
-      
-      for (const selector of possibleContentSelectors) {
-        if ($(selector).length > 0) {
-          content = $(selector).text();
-          break;
-        }
+      if (response.data && response.data.content) {
+        return response.data.content;
       }
       
-      // If no content found, fall back to body
-      if (!content.trim()) {
-        content = $('body').text();
-      }
-      
-      // Clean and return content
-      return content
-        .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 8000); // Limit content length
+      return null;
     } catch (error) {
       console.error(`Error extracting content from ${url}:`, error.message);
       return null;
@@ -117,15 +84,28 @@ export const createSearchService = () => {
     
     for (const result of resultsToProcess) {
       try {
+        // Check if the URL is likely to have CORS issues (most sites do)
         const content = await extractContentFromUrl(result.link);
+        
         if (content) {
           enhancedResults.push({
             ...result,
             fullContent: content
           });
+        } else {
+          // If content extraction failed, still include the result with just the snippet
+          enhancedResults.push({
+            ...result,
+            fullContent: `${result.snippet} (Full content unavailable due to website restrictions)`
+          });
         }
       } catch (error) {
         console.error(`Error processing ${result.link}:`, error.message);
+        // Still add the result using just the snippet
+        enhancedResults.push({
+          ...result,
+          fullContent: `${result.snippet} (Full content unavailable: ${error.message})`
+        });
       }
     }
     
@@ -168,7 +148,8 @@ export const createSearchService = () => {
     extractContentFromUrl,
     getContentForResults,
     searchAndExtract,
-    formatCitations
+    formatCitations,
+    createSearchContext // Add this to return object
   };
 };
 
@@ -178,15 +159,24 @@ export const createSearchService = () => {
  * @returns {String} Formatted context string
  */
 export const createSearchContext = (enhancedResults) => {
+  // If no results with content, handle gracefully
+  if (!enhancedResults || enhancedResults.length === 0) {
+    return "No search results were found for this query.";
+  }
+  
   let context = "Information from web search:\n\n";
   
   enhancedResults.forEach((result, index) => {
     context += `[Source ${index + 1}: ${result.source} (${result.link})]\n`;
     context += `Title: ${result.title}\n`;
-    context += `Content: ${result.fullContent ? result.fullContent.substring(0, 2000) : result.snippet}\n\n`;
+    
+    // Use whatever content we have - either full content or just the snippet
+    const contentToUse = result.fullContent || result.snippet || "No content available";
+    context += `Content: ${contentToUse.substring(0, 1500)}\n\n`;
   });
   
   context += "\nAnswer the user's question based on the information above. ";
+  context += "If the information provided is insufficient to answer the question fully, acknowledge this limitation. ";
   context += "Include citations like [1], [2], etc. when referencing information from specific sources. ";
   context += "Include a 'Sources:' section at the end with numbered references and their URLs.";
   
