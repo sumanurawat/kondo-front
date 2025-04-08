@@ -217,14 +217,12 @@ Your goal is to help users gain deeper understanding without drawing attention t
     
     // Check for truncation indicators
     const truncationPhrases = ["This covers", "In summary", "To summarize", "In conclusion"];
-    let isTruncated = false;
     
     for (const phrase of truncationPhrases) {
       if (processedResponse.endsWith(phrase) || 
           processedResponse.endsWith(phrase + ".") || 
           processedResponse.endsWith(phrase + ":")) {
         processedResponse = processedResponse.substring(0, processedResponse.lastIndexOf(phrase));
-        isTruncated = true;
         break;
       }
     }
