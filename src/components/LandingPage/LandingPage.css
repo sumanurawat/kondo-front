@@ -44,18 +44,21 @@ html, body {
 /* Navigation */
 .landing-nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the username */
   align-items: center;
   padding: 24px 32px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .nav-left {
   display: flex;
   align-items: center;
+}
+
+.nav-right {
+  display: none; /* Hide it completely since it's now empty */
 }
 
 .username {
@@ -73,38 +76,6 @@ html, body {
   background-color: var(--card-primary-bg);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px var(--shadow-color);
-}
-
-.nav-right {
-  display: flex;
-  align-items: center;
-}
-
-.nav-button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.nav-button:hover {
-  background-color: rgba(203, 213, 225, 0.1);
-}
-
-.nav-button.primary {
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-}
-
-.nav-button.primary:hover {
-  background-color: #2563eb; /* Darker blue on hover */
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-  transform: translateY(-1px);
 }
 
 /* Main Content */
@@ -418,20 +389,18 @@ html, body {
 
 /* Adjust nav layout for new design without login/signup */
 .nav-right {
-  display: flex;
-  align-items: center;
+  display: none; /* Hide it completely since it's now empty */
 }
 
 /* Make sure the navigation is properly spaced */
 .landing-nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: center; /* Center the username */
   align-items: center;
   padding: 24px 32px;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  box-sizing: border-box;
 }
 
 /* Mobile optimizations */

@@ -11,21 +11,7 @@ const LandingPage = () => {
           <div className="username">@sumanurawat</div>
         </div>
         <div className="nav-right">
-          <a 
-            href="https://www.linkedin.com/in/sumanurawat/" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="social-link linkedin"
-            title="View LinkedIn Profile"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
-              <rect x="2" y="9" width="4" height="12"></rect>
-              <circle cx="4" cy="4" r="2"></circle>
-            </svg>
-            <span>LinkedIn</span>
-          </a>
-          {/* Login and signup buttons removed */}
+          {/* LinkedIn link removed from here since it's now in the header */}
         </div>
       </nav>
       
@@ -58,6 +44,28 @@ const LandingPage = () => {
                 <circle cx="9" cy="10" r="1"></circle>
                 <circle cx="14" cy="10" r="1"></circle>
                 <path d="M9.5 13.5C9.5 13.5 11 15 12 15C13 15 14.5 13.5 14.5 13.5"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-content">
+              <h2>Doogle</h2>
+              <p>A simple web search interface powered by Google's search API with a clean, focused result display.</p>
+              <div className="card-actions">
+                <Link to="/doogle" className="card-button">
+                  Try it now
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </Link>
+              </div>
+            </div>
+            <div className="feature-illustration">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
             </div>
           </div>

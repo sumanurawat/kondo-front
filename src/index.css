@@ -37,3 +37,25 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Emergency fix for Doogle scrolling */
+body.doogle-active {
+  overflow: auto !important;
+  height: auto !important;
+  position: static !important;
+}
+
+.doogle-page, 
+.doogle-page .app-container, 
+.doogle-page .doogle-container {
+  overflow: auto !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  position: relative !important;
+  max-height: none !important;
+}
+
+.doogle-container .search-results {
+  overflow: visible !important;
+  min-height: 50vh;
+}

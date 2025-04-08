@@ -12,6 +12,7 @@ body {
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   overflow-x: hidden;
+  padding-top: 60px; /* Height of the header */
 }
 
 .App {
@@ -72,6 +73,7 @@ body {
   height: 100vh;
   width: 100%;
   overflow: hidden;
+  padding-top: 0; /* No padding needed as header is already within these pages */
 }
 
 /* Ensure derplexity container takes full space when in derplexity-page */
@@ -82,6 +84,8 @@ body {
   right: 0;
   bottom: 0;
   z-index: 1000;
+  padding-top: 60px; /* Add padding to the container instead */
+  height: calc(100vh - 60px); /* Adjust height to account for header */
 }
 
 /* Landing page styling */
@@ -91,6 +95,25 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow-y: auto; /* Enable scrolling */
+  padding-top: 0; /* No padding needed as header is already within these pages */
+}
+
+/* Doogle page styling - enable scrolling */
+.doogle-page {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto !important;
+  padding-top: 0; /* No padding needed as header is already within these pages */
+}
+
+/* Ensure doogle container takes full space when in doogle-page */
+.doogle-page .doogle-container {
+  position: relative;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 body, html {
@@ -111,4 +134,9 @@ body, html {
   .app-container, .derplexity-page, .landing-page {
     min-height: -webkit-fill-available;
   }
+}
+
+/* Ensure the header is visible on all pages */
+.header {
+  z-index: 1100; /* Higher than other elements */
 }

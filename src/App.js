@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 import LandingPage from 'components/LandingPage/LandingPage'; // Updated path
@@ -13,12 +13,14 @@ import Write from 'components/Write/Write';
 import EditArticle from 'components/EditArticle/EditArticle';
 import BinderPage from 'components/Binder/BinderPage/BinderPage';
 import Derplexity from 'components/Derplexity/Derplexity'; 
+import Doogle from 'components/Doogle/Doogle';
 import './App.css'; 
 
 function App() {
   const location = useLocation();
   const isDerplexity = location.pathname === '/derplexity';
   const isLandingPage = location.pathname === '/';
+  const isDoogle = location.pathname === '/doogle';
   
   // Add a meta viewport tag to ensure proper mobile scaling
   React.useEffect(() => {
@@ -34,9 +36,9 @@ function App() {
   }, []);
   
   return (
-    <div className={`app-container ${isDerplexity ? 'derplexity-page' : ''} ${isLandingPage ? 'landing-page' : ''}`}>
-      {/* Only show header on pages that are not landing or derplexity */}
-      {!isDerplexity && !isLandingPage && <Header />}
+    <div className={`app-container ${isDerplexity ? 'derplexity-page' : ''} ${isLandingPage ? 'landing-page' : ''} ${isDoogle ? 'doogle-page' : ''}`}>
+      {/* Show header on all pages */}
+      <Header />
       
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -49,7 +51,26 @@ function App() {
         <Route path="/EditArticle/:articleId" element={<EditArticle />} />
         <Route path="/binder/:binderId" element={<BinderPage />} />
         <Route path="/derplexity" element={<Derplexity />} />
+        <Route path="/doogle" element={<DoogleWrapper />} />
       </Routes>
+    </div>
+  );
+}
+
+function DoogleWrapper() {
+  useEffect(() => {
+    // Add class to body
+    document.body.classList.add('doogle-active');
+    
+    // Cleanup
+    return () => {
+      document.body.classList.remove('doogle-active');
+    };
+  }, []);
+  
+  return (
+    <div className="doogle-container">
+      <Doogle />
     </div>
   );
 }
