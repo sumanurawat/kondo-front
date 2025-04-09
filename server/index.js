@@ -5,9 +5,9 @@ const cheerio = require('cheerio');
 
 const app = express();
 
-// Update the CORS configuration
+// Expanded CORS configuration to accept requests from all your frontend ports
 const corsOptions = {
-  origin: ['http://localhost:3009', 'http://localhost:3006', 'http://localhost:3000'],
+  origin: ['http://localhost:3000', 'http://localhost:3006', 'http://localhost:3009'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204
@@ -25,7 +25,7 @@ app.post('/api/crawl', async (req, res) => {
   
   try {
     const response = await axios.get(url, {
-      timeout: 8000,
+      timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
@@ -63,4 +63,5 @@ app.post('/api/crawl', async (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`CORS enabled for origins: ${corsOptions.origin.join(', ')}`);
 });

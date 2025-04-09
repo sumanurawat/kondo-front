@@ -250,25 +250,34 @@ function Derplexity() {
     setIsLoading(true);
 
     try {
-      // Always try to enhance with web search when appropriate - no visual indication to user
+      // Add more debugging for web search
+      console.log("🔍 Starting web search enhancement flow");
       let searchContext = '';
       try {
-        // Generate a better search query based on conversation context
+        console.log(`🔍 Generating search query from: "${input}"`);
         const searchQuery = await generateSearchQuery(input, messages);
+        console.log(`🔍 Generated search query: "${searchQuery}"`);
         
         // Search using the optimized query
+        console.log(`🔍 Executing web search for: "${searchQuery}"`);
         const searchResults = await searchService.searchWeb(searchQuery, 5);
+        console.log(`🔍 Search returned ${searchResults?.length || 0} results`);
+        
         if (searchResults && searchResults.length > 0) {
+          console.log(`🔍 Extracting content for ${Math.min(searchResults.length, 3)} results`);
           const resultsWithContent = await searchService.getContentForResults(searchResults, 3);
+          console.log(`🔍 Creating search context from results`);
           searchContext = searchService.createSearchContext(resultsWithContent);
+          console.log(`🔍 Search context created (${searchContext.length} chars)`);
+        } else {
+          console.log("🔍 No search results found, proceeding without search context");
         }
       } catch (searchError) {
-        console.error("Silent search error:", searchError);
+        console.error("🔍 Search error:", searchError);
         // Continue without search results
       }
       
-      // Always use sendMessageWithContext even if searchContext is empty
-      // This ensures consistent response formatting
+      console.log(`🤖 Sending to LLM with${searchContext ? '' : 'out'} search context`);
       const botResponse = await chatService.sendMessageWithContext(input, updatedMessages.slice(0, -1), searchContext);
       
       setMessages([...updatedMessages, botResponse]);

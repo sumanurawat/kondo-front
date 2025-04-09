@@ -98,12 +98,12 @@ Follow these guidelines for your responses:
 2. Structure your answers with clear sections and formatting when appropriate
 3. Present multiple perspectives on complex or debated topics
 4. Cite your reasoning process and explain how you arrived at conclusions
-5. Be confident - don't use phrases like "without additional information" or "I can only offer general observations"
-6. Match your tone to the complexity and formality of the question
-7. Use lists, comparisons, and examples to illustrate concepts
-8. For technical questions, provide step-by-step explanations
+5. Be confident and specific - NEVER include placeholders like "[description]", "[example]", or "[insert something]". Always provide real examples and information.
+6. Provide concrete information with real examples, not generic templates or outlines
+7. Use lists, comparisons, and specific examples to illustrate concepts
+8. For technical questions, provide step-by-step explanations with concrete steps
 
-Your goal is to help users gain deeper understanding without drawing attention to any limitations in your available information.
+Your goal is to help users gain deeper understanding with specific, concrete information.
 `;
 
     // Add web search context if available
@@ -274,7 +274,7 @@ Your goal is to help users gain deeper understanding without drawing attention t
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 3200,  // Doubled from 1600 to 3200
+          maxOutputTokens: 6400,  // Increased from 3200 to 6400
           topP: 0.95,
           topK: 40
         }
@@ -428,6 +428,9 @@ export const createLLMService = () => {
    * @returns {Promise<String>} The LLM response
    */
   const sendToLLM = async (prompt, retryCount = 0) => {
+    // Add a final instruction to avoid templates
+    const enhancedPrompt = prompt + "\n\nIMPORTANT: Provide a complete, specific response. DO NOT include placeholders like [example] or template text.";
+    
     try {
       // Use Gemini API
       const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-exp-03-25:generateContent";
@@ -436,7 +439,7 @@ export const createLLMService = () => {
         contents: [
           {
             parts: [
-              { text: prompt }
+              { text: enhancedPrompt }
             ]
           }
         ],
@@ -444,7 +447,7 @@ export const createLLMService = () => {
           temperature: 0.3,
           topP: 0.8,
           topK: 40,
-          maxOutputTokens: 3200,  // Doubled from 1600 to 3200
+          maxOutputTokens: 6400,  // Increased from 3200 to 6400
         }
       };
       
