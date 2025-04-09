@@ -7,7 +7,7 @@ const app = express();
 
 // Expanded CORS configuration to accept requests from all your frontend ports
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:3006', 'http://localhost:3009'],
+  origin: ['http://localhost:3000', 'http://localhost:3006', 'http://localhost:3009', 'http://localhost:58785'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
   optionsSuccessStatus: 204

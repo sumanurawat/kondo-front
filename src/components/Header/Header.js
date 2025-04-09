@@ -14,6 +14,7 @@ function Header() {
           <li><Link to="/" className="nav-link home-link">Home</Link></li>
           <li><Link to="/derplexity" className="nav-link">Derplexity</Link></li>
           <li><Link to="/doogle" className="nav-link">Doogle</Link></li>
+          <li><Link to="/robin" className="nav-link">Robin</Link></li>
           
           {currentUser && (
             <>

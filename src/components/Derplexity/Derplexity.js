@@ -5,6 +5,11 @@ import { createSearchService } from '../../services/searchService';
 import { marked } from 'marked';
 import { createFileProcessingService } from '../../services/fileProcessingService';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 // Configure marked for security
 marked.setOptions({
@@ -28,7 +33,6 @@ function Derplexity() {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
-  const [expandedFiles, setExpandedFiles] = useState({});
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -73,18 +77,17 @@ function Derplexity() {
     };
   }, []);
 
+  useEffect(() => {
+    const newMessageElements = document.querySelectorAll('.message:not(.animated)');
+    
+    newMessageElements.forEach(element => {
+      element.classList.add('new-message', 'animated');
+    });
+  }, [messages]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  // Handle input changes
-  // Remove this function if not used
-  // const handleInputChange = (e) => {
-  //   setInput(e.target.value);
-  // };
-  
-  // OR use it directly in your input onChange handler:
-  // onChange={(e) => setInput(e.target.value)}
 
   // Send message when Enter key is pressed
   const handleKeyPress = (e) => {
@@ -177,14 +180,6 @@ function Derplexity() {
     setActiveFilePreview(fileId);
   };
 
-  // Toggle file expansion in chat
-  const toggleFileExpansion = (fileId) => {
-    setExpandedFiles(prev => ({
-      ...prev,
-      [fileId]: !prev[fileId]
-    }));
-  };
-
   // Remove a file before sending
   const removeUploadedFile = (fileId) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
@@ -274,6 +269,13 @@ function Derplexity() {
         }
       } catch (searchError) {
         console.error("🔍 Search error:", searchError);
+        // Add a UI notification or status message
+        setMessages(prev => [...prev, {
+          text: "Note: Web search is currently unavailable. I'll answer based on my training.",
+          sender: 'bot',
+          isSystemMessage: true,
+          timestamp: Date.now()
+        }]);
         // Continue without search results
       }
       
@@ -297,31 +299,6 @@ function Derplexity() {
   const handleClearChat = () => {
     setMessages([]);
     chatService.clearChatHistory();
-  };
-  
-  // Format message text with links and code blocks
-  const formatMessageText = (text) => {
-    // Sanitize the text to prevent XSS attacks
-    const sanitizedText = text
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    
-    // Parse markdown
-    let htmlText = marked.parse(sanitizedText);
-    
-    // Add target="_blank" to all links for security
-    htmlText = htmlText.replace(
-      /<a href="([^"]+)">/g,
-      '<a href="$1" target="_blank" rel="noopener noreferrer">'
-    );
-    
-    return htmlText;
-  };
-
-  // Format timestamp
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   // Add file attachment button click handler
@@ -422,6 +399,102 @@ Search query to use:`;
     return query.trim().length > 15;
   };
 
+  const CodeBlock = ({ language, value }) => {
+    const codeStyle = 'vs';
+    const [copied, setCopied] = useState(false);
+    
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
+    
+    return (
+      <div className="code-block-wrapper">
+        <div className="code-header">
+          <span className="language-tag">{language}</span>
+          <button className="copy-button" onClick={copyToClipboard}>
+            {copied ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Copied!
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1-2 2v1"></path>
+                </svg>
+                Copy
+              </>
+            )}
+          </button>
+        </div>
+        <SyntaxHighlighter language={language} style={codeStyle}>
+          {value}
+        </SyntaxHighlighter>
+      </div>
+    );
+  };
+
+  const renderMessage = (message) => {
+    
+    // Return different rendering based on message type
+    if (message.sender === 'bot') {
+      return (
+        <div className={`message bot-message ${message.isTemporary ? 'temporary' : ''}`}>
+          <div className="message-content">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+              components={{
+                code({node, inline, className, children, ...props}) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <CodeBlock 
+                      language={match[1]} 
+                      value={String(children).replace(/\n$/, '')} 
+                    />
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+                a: ({node, children, ...props}) => (
+                  <a target="_blank" rel="noopener noreferrer" {...props}>
+                    {children || props.href} {/* Ensure there's always content */}
+                  </a>
+                )
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
+            <span className="timestamp">
+              {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </span>
+          </div>
+        </div>
+      );
+    } else if (message.isFileContent) {
+      // Your file rendering logic here
+    } else {
+      // Regular user message
+      return (
+        <div className="message user-message">
+          <div className="message-content">
+            {message.text}
+            <span className="timestamp">
+              {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </span>
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="derplexity-container">
       <div className="chat-header">
@@ -440,7 +513,7 @@ Search query to use:`;
             <button className="clear-chat-btn" onClick={handleClearChat}>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1-2-2h4a2 2 0 0 1-2 2v2"></path>
               </svg>
               Clear Chat
             </button>
@@ -455,72 +528,11 @@ Search query to use:`;
             <p>Ask me anything! I'm here to help answer your questions.</p>
           </div>
         ) : (
-          messages.map((msg, index) => {
-            // Generate a stable ID if one doesn't exist
-            const msgId = msg.id || `msg-${index}`;
-            
-            return (
-              <div
-                key={msgId}
-                className={`message ${
-                  msg.sender === 'user' 
-                    ? 'user-message' 
-                    : 'bot-message'
-                } ${msg.isFileContent ? 'file-message' : ''}`}
-              >
-                <div className={`message-content ${msg.isFileContent ? 'file-content-message' : ''}`}>
-                  {msg.isFileContent ? (
-                    <div className="file-content">
-                      <div 
-                        className={`file-header ${expandedFiles[msgId] ? 'expanded' : ''}`}
-                        onClick={() => toggleFileExpansion(msgId)}
-                      >
-                        <div className="file-header-main">
-                          <div className="file-icon">
-                            {msg.fileType?.includes('pdf') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                              </svg>
-                            ) : msg.fileType?.includes('image') ? (
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                <polyline points="21 15 16 10 5 21"></polyline>
-                              </svg>
-                            ) : (
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                              </svg>
-                            )}
-                          </div>
-                          <div className="file-details">
-                            <span className="file-name">{msg.fileName}</span>
-                            <span className="file-meta">Document</span>
-                          </div>
-                        </div>
-                        <div className="expand-icon">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                          </svg>
-                        </div>
-                      </div>
-                      
-                      <div className={`file-text ${expandedFiles[msgId] ? 'show' : ''}`}>
-                        <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
-                      </div>
-                    </div>
-                  ) : msg.sender === 'bot' ? (
-                    <div dangerouslySetInnerHTML={{ __html: formatMessageText(msg.text) }} />
-                  ) : (
-                    <div>{msg.text}</div>
-                  )}
-                  <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
-                </div>
-              </div>
-            );
-          })
+          messages.map((msg, index) => (
+            <div key={msg.id || `msg-${index}`}>
+              {renderMessage(msg)}
+            </div>
+          ))
         )}
         {isLoading && (
           <div className="message bot-message">

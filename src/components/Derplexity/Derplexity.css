@@ -251,17 +251,20 @@ body {
   font-size: 15px;
   line-height: 1.6;
   max-width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .bot-message .message-content a {
-  color: #60a5fa;
+  color: var(--accent-color);
   text-decoration: none;
-  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
-  transition: border-color 0.2s ease, color 0.2s ease;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+  padding-bottom: 1px;
+  transition: all 0.2s ease;
 }
 
 .bot-message .message-content a:hover {
-  border-color: #60a5fa;
+  border-color: var(--accent-color);
+  background-color: rgba(59, 130, 246, 0.05);
   color: #93c5fd;
 }
 
@@ -328,34 +331,80 @@ body {
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
-  margin: 12px 0;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.bot-message .message-content pre:hover .code-header {
+  opacity: 1;
+}
+
+.code-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom-left-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .bot-message .message-content blockquote {
   border-left: 4px solid var(--accent-color);
-  margin: 12px 0;
-  padding: 8px 16px;
-  background-color: rgba(203, 213, 225, 0.1);
+  margin: 16px 0;
+  padding: 8px 0 8px 16px;
+  background-color: rgba(59, 130, 246, 0.05);
   border-radius: 4px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .bot-message .message-content table {
   border-collapse: collapse;
   width: 100%;
   margin: 16px 0;
-  font-size: 0.9em;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.bot-message .message-content th,
-.bot-message .message-content td {
-  border: 1px solid rgba(203, 213, 225, 0.3);
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.bot-message .message-content th {
-  background-color: rgba(203, 213, 225, 0.1);
+.bot-message .message-content table th {
+  background-color: var(--accent-color);
+  color: white;
   font-weight: 600;
+  text-align: left;
+  padding: 10px 16px;
+}
+
+.bot-message .message-content table tr:nth-child(even) {
+  background-color: rgba(203, 213, 225, 0.1);
+}
+
+.bot-message .message-content table td {
+  padding: 10px 16px;
+  border: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.bot-message .message-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 16px 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 
 .bot-message .message-content strong {
@@ -1040,17 +1089,21 @@ input.with-status {
 /* Loading animation */
 @keyframes pulse {
   0% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3);
   }
-  50% {
+  70% {
     transform: scale(1);
-    opacity: 1;
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
   }
   100% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: scale(0.98);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
+}
+
+.message.new-message {
+  animation: pulse 2s ease-out 1;
 }
 
 /* Status transition effects */
@@ -1298,4 +1351,33 @@ input.with-status {
     height: 44px;
     padding: 0 12px;
   }
+}
+
+/* Typing animation effect */
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.message.temporary .message-content {
+  position: relative;
+  overflow: hidden;
+}
+
+.message.temporary .message-content::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent-color);
+  animation: typing 1.5s infinite ease-in-out;
+  width: 0;
 }

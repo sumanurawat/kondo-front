@@ -298,7 +298,13 @@ Your goal is to help users gain deeper understanding with specific, concrete inf
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error Response:", errorText);
+        console.error(`🔥 [LLM] API Error (HTTP ${response.status}):`, errorText);
+        
+        // Specific handling for quota errors
+        if (response.status === 429) {
+          throw new Error(`API quota exceeded. You've reached the limit for Gemini API calls. Consider upgrading your API plan or waiting until the quota resets.`);
+        }
+        
         throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
       }
       

@@ -14,6 +14,7 @@ import EditArticle from 'components/EditArticle/EditArticle';
 import BinderPage from 'components/Binder/BinderPage/BinderPage';
 import Derplexity from 'components/Derplexity/Derplexity'; 
 import Doogle from 'components/Doogle/Doogle';
+import Robin from './components/Robin/Robin';
 import './App.css'; 
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
         <Route path="/binder/:binderId" element={<BinderPage />} />
         <Route path="/derplexity" element={<Derplexity />} />
         <Route path="/doogle" element={<DoogleWrapper />} />
+        <Route path="/robin" element={<Robin />} />
       </Routes>
     </div>
   );
