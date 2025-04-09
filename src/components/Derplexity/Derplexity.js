@@ -10,6 +10,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 // Configure marked for security
 marked.setOptions({
@@ -400,7 +401,7 @@ Search query to use:`;
   };
 
   const CodeBlock = ({ language, value }) => {
-    const codeStyle = 'vs';
+    const codeStyle = vs;
     const [copied, setCopied] = useState(false);
     
     const copyToClipboard = () => {
